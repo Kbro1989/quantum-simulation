@@ -1,5 +1,5 @@
 import numpy as np
-from quantumlab.core.grid import Grid1D, Grid2D
+from quantumlab.core.grid import Grid1D, Grid2D, Grid3D
 
 class AbsorbingBoundaryLayer:
     """
@@ -13,13 +13,14 @@ class AbsorbingBoundaryLayer:
 
     Parameters
     ----------
-    grid : Grid1D or Grid2D
+    grid : Grid1D, Grid2D, or Grid3D
         The spatial grid.
     boundary_width : float
         Physical width of the absorbing layer at each edge.
     order : int, default 3
-        Polynomial order of the mask transition. Higher orders give sharper
-        transitions but may introduce reflections.
+        Polynomial order of the mask transition. Use 3 (smoothstep) for
+        well-behaved transitions; higher orders give sharper roll-offs but
+        may introduce reflections. Minimum effective order is 3.
     """
 
     def __init__(self, grid, boundary_width: float, order: int = 3):
@@ -34,13 +35,14 @@ class AbsorbingBoundaryLayer:
         d is normalized distance into the absorbing layer (0 = edge, 1 = interior boundary).
         """
         d = np.clip(d, 0.0, 1.0)
-        if self.order == 2:
-            return 2.0 * d - d * d
-        elif self.order == 3:
+        if self.order <= 3:
+            # Cubic smoothstep: C1-smooth at both endpoints, zero derivative at d=0 and d=1
             return d * d * (3.0 - 2.0 * d)
         elif self.order == 4:
-            return d * d * d * (4.0 - 3.0 * d)
+            # Quintic smootherstep (Perlin): C2-smooth at both endpoints
+            return d * d * d * (d * (d * 6.0 - 15.0) + 10.0)
         else:
+            # General-order smoothstep via Bernstein polynomial
             result = np.zeros_like(d)
             for k in range(self.order):
                 result += self._binomial(self.order + k - 1, k) * \
@@ -57,8 +59,12 @@ class AbsorbingBoundaryLayer:
         """Construct the absorbing mask for the grid."""
         if isinstance(self.grid, Grid1D):
             return self._build_mask_1d()
-        else:
+        elif isinstance(self.grid, Grid2D):
             return self._build_mask_2d()
+        elif isinstance(self.grid, Grid3D):
+            return self._build_mask_3d()
+        else:
+            raise TypeError(f'Unsupported grid type: {type(self.grid)}')
 
     def _build_mask_1d(self):
         x = self.grid.x
@@ -95,6 +101,31 @@ class AbsorbingBoundaryLayer:
         mask_y *= self._polynomial_profile((y_max - y) / bw)
 
         mask = mask_x[:, np.newaxis] * mask_y[np.newaxis, :]
+        return mask
+
+    def _build_mask_3d(self):
+        x, y, z = self.grid.x, self.grid.y, self.grid.z
+        dx, dy, dz = self.grid.dx, self.grid.dy, self.grid.dz
+        bw = self.boundary_width
+
+        x_min, x_max = x.min(), x.max() + dx
+        y_min, y_max = y.min(), y.max() + dy
+        z_min, z_max = z.min(), z.max() + dz
+
+        mask_x = np.ones_like(x)
+        mask_x *= self._polynomial_profile((x - x_min) / bw)
+        mask_x *= self._polynomial_profile((x_max - x) / bw)
+
+        mask_y = np.ones_like(y)
+        mask_y *= self._polynomial_profile((y - y_min) / bw)
+        mask_y *= self._polynomial_profile((y_max - y) / bw)
+
+        mask_z = np.ones_like(z)
+        mask_z *= self._polynomial_profile((z - z_min) / bw)
+        mask_z *= self._polynomial_profile((z_max - z) / bw)
+
+        # Separable outer product across three axes
+        mask = mask_x[:, np.newaxis, np.newaxis] * mask_y[np.newaxis, :, np.newaxis] * mask_z[np.newaxis, np.newaxis, :]
         return mask
 
     def apply(self, wavefunction):

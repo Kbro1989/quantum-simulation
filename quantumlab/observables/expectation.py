@@ -1,5 +1,5 @@
 import numpy as np
-from quantumlab.core.wavefunction import WaveFunction1D, WaveFunction2D
+from quantumlab.core.wavefunction import WaveFunction1D, WaveFunction2D, WaveFunction3D
 
 def position_expectation(wf) -> float:
     prob = wf.probability_density
@@ -80,6 +80,16 @@ def momentum_squared_expectation(wf, direction: str='x', hbar: float=1.0) -> flo
         else:
             raise ValueError("2D wavefunction supports momentum direction 'x' or 'y'")
         return float(np.sum(p2 * phi_prob) * wf.grid.dk_x * wf.grid.dk_y)
+    elif isinstance(wf, WaveFunction3D):
+        if direction == 'x':
+            p2 = (hbar * wf.grid.K_x) ** 2
+        elif direction == 'y':
+            p2 = (hbar * wf.grid.K_y) ** 2
+        elif direction == 'z':
+            p2 = (hbar * wf.grid.K_z) ** 2
+        else:
+            raise ValueError("3D wavefunction supports momentum direction 'x', 'y', or 'z'")
+        return float(np.sum(p2 * phi_prob) * wf.grid.dk_x * wf.grid.dk_y * wf.grid.dk_z)
     else:
         raise TypeError('Unsupported wavefunction type')
 
@@ -96,6 +106,8 @@ def potential_energy_expectation(wf, potential) -> float:
         return float(np.sum(V * prob) * wf.grid.dx)
     elif isinstance(wf, WaveFunction2D):
         return float(np.sum(V * prob) * wf.grid.dx * wf.grid.dy)
+    elif isinstance(wf, WaveFunction3D):
+        return float(np.sum(V * prob) * wf.grid.dx * wf.grid.dy * wf.grid.dz)
     else:
         raise TypeError('Unsupported wavefunction type')
 
@@ -107,6 +119,11 @@ def kinetic_energy_expectation(wf, hbar: float=1.0, m: float=1.0) -> float:
         mean_p2_x = momentum_squared_expectation(wf, 'x', hbar)
         mean_p2_y = momentum_squared_expectation(wf, 'y', hbar)
         return float((mean_p2_x + mean_p2_y) / (2.0 * m))
+    elif isinstance(wf, WaveFunction3D):
+        mean_p2_x = momentum_squared_expectation(wf, 'x', hbar)
+        mean_p2_y = momentum_squared_expectation(wf, 'y', hbar)
+        mean_p2_z = momentum_squared_expectation(wf, 'z', hbar)
+        return float((mean_p2_x + mean_p2_y + mean_p2_z) / (2.0 * m))
     else:
         raise TypeError('Unsupported wavefunction type')
 
