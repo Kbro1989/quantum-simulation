@@ -41,3 +41,44 @@ class Grid2D:
     @property
     def shape(self):
         return (self.N_x, self.N_y)
+
+class Grid3D:
+
+    def __init__(self, N_x: int, x_min: float, x_max: float,
+                 N_y: int, y_min: float, y_max: float,
+                 N_z: int, z_min: float, z_max: float):
+        self.N_x = N_x
+        self.x_min = x_min
+        self.x_max = x_max
+        self.L_x = x_max - x_min
+        self.dx = self.L_x / N_x
+        self.x = np.linspace(x_min, x_max, N_x, endpoint=False)
+
+        self.N_y = N_y
+        self.y_min = y_min
+        self.y_max = y_max
+        self.L_y = y_max - y_min
+        self.dy = self.L_y / N_y
+        self.y = np.linspace(y_min, y_max, N_y, endpoint=False)
+
+        self.N_z = N_z
+        self.z_min = z_min
+        self.z_max = z_max
+        self.L_z = z_max - z_min
+        self.dz = self.L_z / N_z
+        self.z = np.linspace(z_min, z_max, N_z, endpoint=False)
+
+        self.X, self.Y, self.Z = np.meshgrid(self.x, self.y, self.z, indexing='ij')
+
+        self.k_x = 2 * np.pi * np.fft.fftfreq(N_x, self.dx)
+        self.k_y = 2 * np.pi * np.fft.fftfreq(N_y, self.dy)
+        self.k_z = 2 * np.pi * np.fft.fftfreq(N_z, self.dz)
+        self.K_x, self.K_y, self.K_z = np.meshgrid(self.k_x, self.k_y, self.k_z, indexing='ij')
+
+        self.dk_x = 2 * np.pi / self.L_x
+        self.dk_y = 2 * np.pi / self.L_y
+        self.dk_z = 2 * np.pi / self.L_z
+
+    @property
+    def shape(self):
+        return (self.N_x, self.N_y, self.N_z)
