@@ -9,7 +9,11 @@ from quantumlab.observables.coefficients import transmission_coefficient, reflec
 from quantumlab.visualization.plots_1d import plot_wavefunction_1d, plot_dual_space_1d
 from quantumlab.visualization.plots_3d import plot_space_time_3d
 
+import sys
+
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     L = 100.0
     N = 1024
     dt = 0.04
