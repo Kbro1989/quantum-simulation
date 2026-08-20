@@ -10,7 +10,11 @@ from quantumlab.observables.expectation import (
 )
 from quantumlab.visualization.plots_2d import plot_density_2d, plot_density_snapshots_2d
 
+import sys
+
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     Lx, Ly = 80.0, 80.0
     Nx, Ny = 256, 256
     dt = 0.02

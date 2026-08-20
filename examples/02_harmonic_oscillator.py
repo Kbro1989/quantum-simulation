@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 from quantumlab.core.grid import Grid1D
 from quantumlab.core.wavefunction import WaveFunction1D
@@ -9,6 +10,8 @@ from quantumlab.visualization.plots_1d import plot_wavefunction_1d
 from quantumlab.visualization.plots_3d import plot_space_time_3d
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     L = 60.0
     N = 512
     dt = 0.02

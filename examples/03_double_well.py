@@ -8,7 +8,11 @@ from quantumlab.observables.expectation import position_expectation, total_energ
 from quantumlab.visualization.plots_1d import plot_wavefunction_1d
 from quantumlab.visualization.plots_3d import plot_space_time_3d
 
+import sys
+
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     L = 30.0
     N = 512
     dt = 0.05

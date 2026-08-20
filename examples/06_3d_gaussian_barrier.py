@@ -7,7 +7,11 @@ from quantumlab.solvers.split_step_3d import SplitStep3DSolver
 from quantumlab.core.absorbing_boundary import AbsorbingBoundaryLayer
 from quantumlab.visualization.plots_2d import plot_orthogonal_slices_3d
 
+import sys
+
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     L  = 60.0
     N  = 64           # 64³ grid — manageable on a laptop (~128 MB)
     dt = 0.02

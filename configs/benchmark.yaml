@@ -1,0 +1,33 @@
+output_dir: output/benchmark
+
+simulations:
+  3d_gpu_barrier:
+    dimension: 3
+    gpu: true
+    grid:
+      N: 128
+      L: 60.0
+    wavefunction:
+      x0: -15.0
+      sigma: 3.0
+      k0_x: 3.0
+    potential:
+      type: gaussian_3d_barrier
+      params:
+        V0: 5.0
+        width: 4.0
+        x0: 0.0
+        y0: 0.0
+        z0: 0.0
+    dt: 0.02
+    num_steps: 300
+    snapshot_interval: 50
+    log_interval: 50
+    save_state: true
+    absorbing_boundary:
+      width: 8.0
+      order: 3
+    animation:
+      format: mp4
+      fps: 24
+      theme: dark
