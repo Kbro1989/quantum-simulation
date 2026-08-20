@@ -33,23 +33,29 @@ quantumlab/
 ├── solvers/
 │   ├── split_step_1d.py     # 1D Split-Step Fourier solver
 │   ├── split_step_2d.py     # 2D Split-Step Fourier solver
-│   └── split_step_3d.py     # 3D Split-Step Fourier solver
+│   ├── split_step_3d.py     # 3D Split-Step Fourier solver (CPU/SciPy)
+│   └── split_step_3d_gpu.py # 3D SSFM with CuPy GPU acceleration + CPU fallback
 ├── potentials/
+│   ├── base.py              # Abstract Potential base class
 │   ├── barriers.py          # Gaussian (1D/2D/3D), Rectangular, Step, Multiple, RTD
 │   ├── wells.py             # InfiniteSquareWell, FiniteSquareWell, DoubleWell
 │   ├── oscillator.py        # HarmonicOscillator
 │   ├── periodic.py          # CrystalPotential
 │   ├── disorder.py          # RandomDisorder
-│   └── custom.py            # CustomPotential
+│   └── custom.py            # CustomPotential (user-defined callable)
 ├── observables/
 │   ├── expectation.py       # Position, momentum, energy expectation values & uncertainties
 │   ├── coefficients.py      # Transmission & reflection coefficients
 │   └── momentum.py          # Momentum-space wavefunction
-└── visualization/
-    ├── plots_1d.py          # 1D wavefunction & dual-space plots
-    ├── plots_2d.py          # 2D density heatmaps, snapshots, orthogonal 3D slices
-    ├── plots_3d.py          # 3D space-time surface rendering
-    └── style.py             # Theme management (light/dark)
+├── visualization/
+│   ├── plots_1d.py          # 1D wavefunction & dual-space plots
+│   ├── plots_2d.py          # 2D density heatmaps, snapshots, orthogonal 3D slices
+│   ├── plots_3d.py          # 3D space-time surface rendering
+│   ├── animation.py         # Time-evolution animation exporter (MP4/GIF)
+│   └── style.py             # Theme management (light/dark)
+├── config.py                # Default config loader (YAML-based)
+├── constants.py             # Physical constants (atomic units)
+└── runner.py                # HPC batch simulation runner (YAML-driven)
 ```
 
 ---
@@ -228,7 +234,7 @@ for _ in range(800):
     wf = solver.step(wf)
 
 # Analyze
-R = reflection_coefficient(wf, barrier_center=2.0)
-T = transmission_coefficient(wf, barrier_center=2.0)
+R = reflection_coefficient(wf, barrier_position=2.0)
+T = transmission_coefficient(wf, barrier_position=2.0)
 print(f"R={R:.4f}, T={T:.4f}, R+T={R+T:.6f}")
 ```
