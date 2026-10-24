@@ -15,7 +15,7 @@
 
 | Area | Capabilities |
 |---|---|
-| **Time evolution** | Split-operator propagation of order 2 (Strang) and 4 (Yoshida); time-dependent potentials V(r, t); Gross–Pitaevskii nonlinearity; rotating frames (H − ΩL_z); dissipative dynamics; absorbing boundaries |
+| **Time evolution** | Split-operator propagation of order 2 (Strang) and 4 (Yoshida); time-dependent potentials V(r, t); Gross–Pitaevskii nonlinearity, including coupled multi-component condensates; rotating frames (H − ΩL_z); dissipative dynamics; absorbing boundaries |
 | **Stationary states** | Lanczos and preconditioned LOBPCG eigensolvers on a matrix-free FFT Hamiltonian; imaginary-time ground and excited states, including GP ground states in rotating frames |
 | **Physics models** | Barriers, wells, (anisotropic) harmonic traps, multi-slit and pinhole screens, chaotic stadium billiard, soft-core Coulomb atoms, lattices, disorder, laser-like dipole driving, custom potentials |
 | **Strong-field physics** | High-harmonic spectra, Gabor time–frequency analysis, three-step model, attosecond pulse synthesis |
@@ -31,5 +31,5 @@ Every feature is checked against exact, analytic or independent numerical result
 
 - [Getting started](getting-started.md): installation and a first simulation
 - [User guide](guide/solvers.md): the solvers, stationary states, potentials and visualization in depth
-- [Examples](examples.md): twelve ready-to-run simulations with their results
+- [Examples](examples.md): thirteen ready-to-run simulations with their results
 - [API reference](api/core.md): every class and function, generated from the source

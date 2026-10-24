@@ -82,6 +82,17 @@ class SplitOperatorSolver(Solver):
         device at every sub-step.
     device_id : int
         CUDA device for the 'cupy' backend.
+
+    Notes
+    -----
+    Every factor is unitary, but for nonlinear problems on a uniform (or
+    broad) background the split-step method has a parametric numerical
+    instability when the kinetic phase of the highest grid wavenumber per
+    (sub)step exceeds π (Weideman & Herbst, SIAM J. Numer. Anal. 23, 485
+    (1986)). Keep ``ℏ k_max² / (2m) · |w| dt < π`` with k_max = π/dx, where
+    |w| ≤ 1.71 for order 4, otherwise round-off noise in the shortest
+    wavelengths can grow exponentially. Localised states (solitons, trapped
+    condensates) are much less sensitive.
     """
 
     def __init__(self, grid, potential, dt: float, hbar: float = 1.0, m: float = 1.0,

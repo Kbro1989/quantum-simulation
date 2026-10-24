@@ -242,6 +242,71 @@ def high_harmonics():
           'max |spacing − ½| (cycles)', float(np.max(np.abs(spacing - 0.5))), 0.01)
 
 
+def two_component():
+    from quantumlab.solvers.multicomponent import CoupledGPESolver
+    from quantumlab.stationary import coupled_ground_state
+    box = Grid1D(256, -20 * np.pi, 20 * np.pi)
+    n, g = 1.0, 1.0
+
+    def seeded(k):
+        return (WaveFunction1D(box, np.sqrt(n) * (1 + 1e-6 * np.cos(k * box.x)) + 0j),
+                WaveFunction1D(box, np.sqrt(n) * (1 - 1e-6 * np.cos(k * box.x)) + 0j))
+
+    def spin(states, k):
+        return float(np.sum((states[0].probability_density - states[1].probability_density)
+                            * np.cos(k * box.x)) * 2 / box.N)
+
+    g12, k = 0.6, box.dk * 10
+    omega = np.sqrt(k ** 2 / 2 * (k ** 2 / 2 + 2 * n * (g - g12)))
+    solver = CoupledGPESolver(box, (None, None), [[g, g12], [g12, g]], 0.01, order=4)
+    state, err = seeded(k), 0.0
+    for _ in range(12):
+        state = solver.evolve(state, 500)
+        err = max(err, abs(spin(state, k) - 4e-6 * np.cos(omega * solver.t)) / 4e-6)
+    check('Two-component BEC', 'Bogoliubov spin mode, miscible mixture (t ≤ 60)',
+          'δ(n₁−n₂) ∝ cos ω_s t, ω_s² = ε_k(ε_k + 2n(g − g₁₂))', 'max relative deviation', err, 1e-6)
+
+    g12 = 1.3
+    k = box.dk * np.round(np.sqrt(2 * n * (g12 - g)) / box.dk)
+    gamma = np.sqrt(k ** 2 / 2 * (2 * n * (g12 - g) - k ** 2 / 2))
+    solver = CoupledGPESolver(box, (None, None), [[g, g12], [g12, g]], 0.01, order=4)
+    state, t, amp = seeded(k), [], []
+    while not amp or amp[-1] < 1e-3:
+        state = solver.evolve(state, 100)
+        t.append(solver.t)
+        amp.append(abs(spin(state, k)))
+    t, amp = np.array(t), np.array(amp)
+    rate = np.polyfit(t[amp > 1.2e-4], np.log(amp[amp > 1.2e-4]), 1)[0]
+    check('Two-component BEC', 'Phase-separation instability, g₁₂ = 1.3 g', 'growth rate γ = √(ε_k(2n(g₁₂ − g) − ε_k))',
+          '|γ_measured/γ − 1|', abs(rate / gamma - 1), 1e-3)
+
+    grid = Grid2D(64, -8.0, 8.0, 64, -8.0, 8.0)
+    trap, G = HarmonicTrap((1.0, 1.3)), 60.0
+    a = WaveFunction2D.gaussian(grid, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0)
+    b = WaveFunction2D.gaussian(grid, -1.0, 0.5, 0.0, 0.0, 1.0, 1.0)
+    a.psi *= np.sqrt(0.3)
+    b.psi *= np.sqrt(0.7)
+    (s1, s2), _ = coupled_ground_state(grid, (trap, trap), [[G, G], [G, G]], (a, b), dtau=0.005)
+    single, _ = ground_state(grid, trap, dtau=0.005, nonlinearity=G)
+    check('Two-component BEC', 'Manakov point g₁₁ = g₂₂ = g₁₂', 'n₁ + n₂ equals the one-component GP ground state',
+          'max |n₁ + n₂ − n|', float(np.max(np.abs(s1.probability_density + s2.probability_density
+                                                  - single.probability_density))), 1e-6)
+
+    G2 = np.array([[100.0, 70.0], [70.0, 120.0]])
+    grid = Grid2D(80, -9.0, 9.0, 80, -9.0, 9.0)
+    a = WaveFunction2D.gaussian(grid, 1.5, 0.0, 0.0, 0.0, 1.0, 1.0)
+    b = WaveFunction2D.gaussian(grid, -1.5, 0.0, 0.0, 0.0, 1.0, 1.0)
+    a.psi *= np.sqrt(0.5)
+    b.psi *= np.sqrt(0.5)
+    states, _ = coupled_ground_state(grid, (HarmonicTrap(1.0), HarmonicTrap(1.0)), G2, (a, b), dtau=0.005)
+    T = sum(kinetic_energy_expectation(s) for s in states)
+    V = sum(potential_energy_expectation(s, HarmonicTrap(1.0)) for s in states)
+    nn = [s.probability_density for s in states]
+    E_int = 0.5 * sum(G2[i, j] * np.sum(nn[i] * nn[j]) for i in range(2) for j in range(2)) * grid.dx * grid.dy
+    check('Two-component BEC', 'Virial theorem, coupled GP ground state', '2⟨T⟩ − 2⟨V⟩ + 2E_int = 0 (2D)',
+          '|2T − 2V + 2E_int| / V', abs(2 * T - 2 * V + 2 * E_int) / V, 1e-4)
+
+
 def write_report(path, elapsed):
     lines = [
         '# QuantumLab validation report',
@@ -271,7 +336,7 @@ def main():
     t0 = time.time()
     for fn in (free_spreading, convergence_orders, driven_oscillator, norm_energy_3d, heisenberg_3d,
                vortex_lz, harmonic_spectra, feit_fleck, bright_soliton, gp_virial, gp_dtau_order,
-               rotating_frame, high_harmonics):
+               rotating_frame, high_harmonics, two_component):
         print(f'{fn.__name__}:')
         fn()
     out = Path(__file__).with_name('validation_report.md')

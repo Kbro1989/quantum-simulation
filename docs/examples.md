@@ -86,3 +86,16 @@ A hydrogen atom (soft-core model, I_p = 13.6 eV) is driven by an 800 nm pulse at
 ![Electron in space and time](images/12_electron_spacetime.png)
 ![Cutoff scan](images/12_hhg_cutoff_scan.png)
 
+## 13. Two-component condensates
+
+Two condensates with couplings g₁₁ = g₂₂ = g and g₁₂:
+- **Miscibility:** in a trap, the overlap of the ground states drops sharply just above g₁₂ = g. The uniform criterion is g₁₂² = g₁₁g₂₂, and a finite cloud shifts the transition slightly upward.
+- **Spinodal decomposition:** a uniform mixture with g₁₂ = 1.3g separates into labyrinthine domains. Their growth on the |k| ≈ k\* shell matches the Bogoliubov rate γ\* = n(g₁₂ − g) to 0.3%, and the structure-factor peak sits at k\* within one bin. Afterwards the domains coarsen.
+- **Two-colour vortex lattices:** in a rotating trap both components nucleate vortices, which interlace. Every vortex core of one component sits on a density maximum of the other, at a median 1.8× its local average.
+
+![Phase separation](images/13_phase_separation.gif)
+![Interlaced vortex lattices](images/13_vortex_lattices.gif)
+![Miscibility](images/13_miscibility.png)
+![Growth of the instability](images/13_phase_separation_growth.png)
+![Interlaced lattices](images/13_vortex_lattices.png)
+
