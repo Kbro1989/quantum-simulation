@@ -62,6 +62,16 @@ def test_runner_runs_each_dimension(config_path, sim_name):
     assert result['snap_times'] == pytest.approx([0.0, 0.01, 0.02, 0.03])
 
 
+@pytest.mark.parametrize('dim', [1, 3])
+def test_runner_split_operator_solver(tmp_path, dim):
+    base = SIMULATIONS['sim_1d' if dim == 1 else 'sim_3d']
+    cfg = dict(base, solver='split_operator', order=4, nonlinearity=0.5, dt=0.01, num_steps=3, log_interval=1)
+    path = tmp_path / 'config.yaml'
+    path.write_text(yaml.safe_dump({'output_dir': str(tmp_path / 'out'), 'simulations': {'s': cfg}}))
+    wf = SimulationRunner(str(path)).run()['s']['final_wavefunction']
+    assert wf.norm() == pytest.approx(1.0, abs=1e-10)
+
+
 def test_runner_save_state(tmp_path):
     cfg = dict(SIMULATIONS['sim_1d'], dt=0.01, num_steps=2, save_state=True)
     path = tmp_path / 'config.yaml'

@@ -8,3 +8,4 @@ numba>=0.56
 Pillow>=9.0
 imageio>=2.20
 imageio-ffmpeg>=0.4
+scikit-image>=0.20

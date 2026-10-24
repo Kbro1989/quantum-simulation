@@ -138,6 +138,8 @@ def momentum_uncertainty(wf, direction: str='x', hbar: float=1.0) -> float:
     return float(np.sqrt(max(variance, 0.0)))
 
 def potential_energy_expectation(wf, potential) -> float:
+    if potential is None:  # free space
+        return 0.0
     V = potential.evaluate(wf.grid)
     prob = wf.probability_density
     if isinstance(wf, WaveFunction1D):
