@@ -2,6 +2,7 @@
 
 [![tests](https://github.com/rasidi3112/quantum-simulation/actions/workflows/tests.yml/badge.svg)](https://github.com/rasidi3112/quantum-simulation/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![docs](https://github.com/rasidi3112/quantum-simulation/actions/workflows/docs.yml/badge.svg)](https://rasidi3112.github.io/quantum-simulation/)
 
 A high-performance, modular Python library for numerical quantum mechanics simulations. QuantumLab solves the Time-Dependent Schrödinger Equation (TDSE) in **1D, 2D, and 3D** using the Split-Step Fourier Method (SSFM) to model quantum wave packet dynamics with high physical fidelity. It also solves the nonlinear **Gross–Pitaevskii equation** for Bose–Einstein condensates and computes **stationary states** with matrix-free eigensolvers.
 
@@ -12,6 +13,8 @@ A high-performance, modular Python library for numerical quantum mechanics simul
 <p align="center"><em>Left: Young's double-pinhole experiment in 3D (|ψ|² isosurfaces). Right: a Bose–Einstein condensate released from a cigar-shaped trap, coloured by the quantum phase arg ψ.</em></p>
 
 Every new feature is checked against exact or independent results; see [Validation](#validation).
+
+**Documentation:** [rasidi3112.github.io/quantum-simulation](https://rasidi3112.github.io/quantum-simulation/) has a user guide, the API reference, the examples gallery and the validation report.
 
 ---
 
