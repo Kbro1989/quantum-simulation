@@ -151,3 +151,73 @@ def excited_states(grid, potential, n_states: int, dtau: float = 0.01, tol: floa
         energies.append(info.energy)
         infos.append(info)
     return np.array(energies), states, infos
+
+
+@dataclass
+class CoupledConvergenceInfo:
+    converged: bool
+    steps: int
+    energy: float
+    chemical_potentials: List[float]
+    residuals: List[float]
+
+
+def _coupled_energy_mu(psis, grid, Vs, g, hbar, m, rotation, dV):
+    n = [np.abs(p) ** 2 for p in psis]
+    energy, mus, residuals = 0.0, [], []
+    for i, p in enumerate(psis):
+        N = float(np.sum(n[i]) * dV)
+        H_lin = apply_hamiltonian(p, grid, Vs[i], hbar, m, rotation=rotation)
+        energy += float(np.real(_inner(p, H_lin, dV)))
+        H_psi = H_lin + sum(g[i, j] * n[j] for j in range(len(psis))) * p
+        mu = float(np.real(_inner(p, H_psi, dV))) / N
+        mus.append(mu)
+        residuals.append(float(np.sqrt(np.sum(np.abs(H_psi - mu * p) ** 2) * dV / N)))
+    energy += 0.5 * sum(g[i, j] * float(np.sum(n[i] * n[j]) * dV)
+                        for i in range(len(psis)) for j in range(len(psis)))
+    return energy, mus, residuals
+
+
+def coupled_ground_state(grid, potentials, couplings, initial, dtau: float = 0.005, tol: float = 1e-11,
+                         max_steps: int = 50000, check_interval: int = 20, hbar: float = 1.0,
+                         m: float = 1.0, rotation: float = 0.0, backend='numpy', workers: int = -1):
+    """
+    Lowest-energy state of coupled Gross–Pitaevskii equations by imaginary
+    time, at fixed populations N_i given by the norms of ``initial``.
+
+    Parameters
+    ----------
+    initial : sequence of WaveFunction or ndarray
+        One starting state per component. For immiscible mixtures the guess
+        should break the symmetry between the components (e.g. displaced
+        clouds); a symmetric guess can stay on a symmetric saddle point.
+
+    Returns
+    -------
+    states : tuple of WaveFunction
+    info : CoupledConvergenceInfo
+        ``energy`` is the total energy functional (of H − ΩL_z when rotating),
+        ``chemical_potentials`` and ``residuals`` (‖H_iψ_i − μ_iψ_i‖/√N_i) are
+        per component.
+    """
+    from quantumlab.solvers.multicomponent import CoupledGPESolver
+    g = np.asarray(couplings, dtype=float)
+    solver = CoupledGPESolver(grid, potentials, g, dtau, hbar, m, order=2, imaginary_time=True,
+                              rotation=rotation, backend=backend, workers=workers)
+    dV = volume_element(grid)
+    wf_class = wavefunction_class(grid)
+    Vs = [np.zeros(grid.shape) if p is None else np.asarray(p.evaluate(grid), dtype=float) for p in potentials]
+    states = tuple(wf_class(grid, np.array(getattr(s, 'psi', s), dtype=complex)) for s in initial)
+    energy_prev = np.inf
+    converged = False
+    steps = 0
+    while steps < max_steps:
+        states = solver.evolve(states, check_interval)
+        steps += check_interval
+        energy, _, _ = _coupled_energy_mu([s.psi for s in states], grid, Vs, g, hbar, m, rotation, dV)
+        if abs(energy - energy_prev) < tol:
+            converged = True
+            break
+        energy_prev = energy
+    energy, mus, residuals = _coupled_energy_mu([s.psi for s in states], grid, Vs, g, hbar, m, rotation, dV)
+    return states, CoupledConvergenceInfo(converged, steps, energy, mus, residuals)

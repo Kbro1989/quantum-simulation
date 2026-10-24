@@ -163,3 +163,19 @@ def test_real_cupy_matches_cpu(kwargs):
     gpu = gpu_solver.evolve(wf0, 50)
     assert gpu_solver.backend == 'cupy'
     np.testing.assert_allclose(gpu.psi, cpu.psi, atol=1e-11)
+
+
+def test_coupled_solver_device_path_matches_numpy():
+    from quantumlab.solvers.multicomponent import CoupledGPESolver
+    grid = Grid2D(40, -7.0, 7.0, 40, -7.0, 7.0)
+    a = WaveFunction2D.gaussian(grid, 1.0, 0.0, 0.3, 0.0, 1.0, 1.0)
+    b = WaveFunction2D.gaussian(grid, -1.0, 0.0, 0.0, 0.2, 1.0, 1.0)
+    G = [[50.0, 30.0], [30.0, 60.0]]
+    for kwargs in (dict(order=4, rotation=0.4), dict(damping=0.05, rotation=0.6), dict(imaginary_time=True)):
+        backend, calls = _strict_backend()
+        ref = CoupledGPESolver(grid, (HarmonicTrap(1.0), HarmonicTrap(1.2)), G, 0.01, **kwargs).evolve((a, b), 25)
+        dev = CoupledGPESolver(grid, (HarmonicTrap(1.0), HarmonicTrap(1.2)), G, 0.01, backend=backend,
+                               **kwargs).evolve((a, b), 25)
+        for r, d in zip(ref, dev):
+            np.testing.assert_allclose(d.psi, r.psi, atol=1e-13)
+        assert calls['to_host'] == 2        # one copy back per component, at the end
