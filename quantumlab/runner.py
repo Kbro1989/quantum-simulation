@@ -14,6 +14,7 @@ from quantumlab.core.absorbing_boundary import AbsorbingBoundaryLayer
 from quantumlab.potentials import create_potential
 from quantumlab.solvers import SplitStep1DSolver, SplitStep2DSolver, SplitStep3DSolver
 from quantumlab.solvers.split_step_3d_gpu import SplitStep3DGPU
+from quantumlab.solvers.split_operator import SplitOperatorSolver
 from quantumlab.observables.expectation import total_energy_expectation, position_expectation
 from quantumlab.visualization.animation import WavePacketAnimator
 
@@ -101,6 +102,12 @@ class SimulationRunner:
         m = float(cfg.get("m", 1.0))
         gpu = bool(cfg.get("gpu", False))
 
+        if cfg.get("solver") == "split_operator":
+            return SplitOperatorSolver(
+                grid, potential, dt, hbar, m,
+                order=int(cfg.get("order", 2)),
+                nonlinearity=float(cfg.get("nonlinearity", 0.0)),
+            )
         if dim == 1:
             return SplitStep1DSolver(grid, potential, dt, hbar, m)
         elif dim == 2:

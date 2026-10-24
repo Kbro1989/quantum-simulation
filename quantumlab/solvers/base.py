@@ -12,3 +12,7 @@ class Solver(ABC):
     @abstractmethod
     def step(self, wavefunction):
         pass
+
+    @property
+    def backend(self) -> str:
+        return 'scipy-cpu'
