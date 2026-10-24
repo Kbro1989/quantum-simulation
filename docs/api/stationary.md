@@ -6,4 +6,6 @@ Generated from the docstrings in the source code.
 
 ::: quantumlab.stationary.imaginary_time
 
+::: quantumlab.stationary.conjugate_gradient
+
 ::: quantumlab.stationary.hamiltonian
