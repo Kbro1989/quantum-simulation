@@ -71,3 +71,18 @@ A condensate in a rotating, slightly anisotropic trap develops surface instabili
 
 ![Vortex lattice formation](images/11_vortex_lattice_formation.gif)
 ![Vortex lines](images/11_vortex_lines_3d.gif)
+
+## 12. High-harmonic generation in hydrogen
+
+A hydrogen atom (soft-core model, I_p = 13.6 eV) is driven by an 800 nm pulse at 10¹⁴ W/cm². The electron tunnels out, is driven back and recollides, emitting odd harmonics up to a cutoff.
+- **Odd harmonics only:** even orders are 2300× weaker, as inversion symmetry requires.
+- **Emission times:** each harmonic is emitted when the classical short and long trajectories return, within the 0.05-cycle resolution of the analysis.
+- **Attosecond pulses:** filtering H11–H21 gives bursts of about 200 as, one every half cycle (spacing 0.499–0.503 cycle).
+- **Cutoff scaling:** an intensity scan shows the cutoff growing linearly with U_p. The fitted spectral edge, 3.48 U_p + 1.52 I_p, lies near the three-step laws, and its exact value depends on how the edge is defined.
+
+![HHG spectrum](images/12_hhg_spectrum.png)
+![Time-frequency analysis](images/12_hhg_time_frequency.png)
+![Attosecond pulses](images/12_attosecond_pulses.png)
+![Electron in space and time](images/12_electron_spacetime.png)
+![Cutoff scan](images/12_hhg_cutoff_scan.png)
+
