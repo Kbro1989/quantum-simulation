@@ -7,6 +7,8 @@ def position_expectation(wf) -> float:
         return float(np.sum(wf.grid.x * prob) * wf.grid.dx)
     elif isinstance(wf, WaveFunction2D):
         return float(np.sum(wf.grid.X * prob) * wf.grid.dx * wf.grid.dy)
+    elif isinstance(wf, WaveFunction3D):
+        return float(np.sum(wf.grid.X * prob) * wf.grid.dx * wf.grid.dy * wf.grid.dz)
     else:
         raise TypeError('Unsupported wavefunction type')
 
@@ -16,6 +18,8 @@ def position_squared_expectation(wf) -> float:
         return float(np.sum(wf.grid.x ** 2 * prob) * wf.grid.dx)
     elif isinstance(wf, WaveFunction2D):
         return float(np.sum(wf.grid.X ** 2 * prob) * wf.grid.dx * wf.grid.dy)
+    elif isinstance(wf, WaveFunction3D):
+        return float(np.sum(wf.grid.X ** 2 * prob) * wf.grid.dx * wf.grid.dy * wf.grid.dz)
     else:
         raise TypeError('Unsupported wavefunction type')
 
@@ -26,23 +30,47 @@ def position_uncertainty(wf) -> float:
     return float(np.sqrt(max(variance, 0.0)))
 
 def y_expectation(wf) -> float:
+    prob = wf.probability_density
     if isinstance(wf, WaveFunction2D):
-        prob = wf.probability_density
         return float(np.sum(wf.grid.Y * prob) * wf.grid.dx * wf.grid.dy)
+    elif isinstance(wf, WaveFunction3D):
+        return float(np.sum(wf.grid.Y * prob) * wf.grid.dx * wf.grid.dy * wf.grid.dz)
     else:
-        raise ValueError('y expectation only defined for 2D wavefunctions')
+        raise ValueError('y expectation only defined for 2D and 3D wavefunctions')
 
 def y_squared_expectation(wf) -> float:
+    prob = wf.probability_density
     if isinstance(wf, WaveFunction2D):
-        prob = wf.probability_density
         return float(np.sum(wf.grid.Y ** 2 * prob) * wf.grid.dx * wf.grid.dy)
+    elif isinstance(wf, WaveFunction3D):
+        return float(np.sum(wf.grid.Y ** 2 * prob) * wf.grid.dx * wf.grid.dy * wf.grid.dz)
     else:
-        raise ValueError('y^2 expectation only defined for 2D wavefunctions')
+        raise ValueError('y^2 expectation only defined for 2D and 3D wavefunctions')
 
 def y_uncertainty(wf) -> float:
     mean_y = y_expectation(wf)
     mean_y2 = y_squared_expectation(wf)
     variance = mean_y2 - mean_y ** 2
+    return float(np.sqrt(max(variance, 0.0)))
+
+def z_expectation(wf) -> float:
+    if isinstance(wf, WaveFunction3D):
+        prob = wf.probability_density
+        return float(np.sum(wf.grid.Z * prob) * wf.grid.dx * wf.grid.dy * wf.grid.dz)
+    else:
+        raise ValueError('z expectation only defined for 3D wavefunctions')
+
+def z_squared_expectation(wf) -> float:
+    if isinstance(wf, WaveFunction3D):
+        prob = wf.probability_density
+        return float(np.sum(wf.grid.Z ** 2 * prob) * wf.grid.dx * wf.grid.dy * wf.grid.dz)
+    else:
+        raise ValueError('z^2 expectation only defined for 3D wavefunctions')
+
+def z_uncertainty(wf) -> float:
+    mean_z = z_expectation(wf)
+    mean_z2 = z_squared_expectation(wf)
+    variance = mean_z2 - mean_z ** 2
     return float(np.sqrt(max(variance, 0.0)))
 
 def momentum_expectation(wf, direction: str='x', hbar: float=1.0) -> float:
@@ -61,6 +89,16 @@ def momentum_expectation(wf, direction: str='x', hbar: float=1.0) -> float:
         else:
             raise ValueError("2D wavefunction supports momentum direction 'x' or 'y'")
         return float(np.sum(p * phi_prob) * wf.grid.dk_x * wf.grid.dk_y)
+    elif isinstance(wf, WaveFunction3D):
+        if direction == 'x':
+            p = hbar * wf.grid.K_x
+        elif direction == 'y':
+            p = hbar * wf.grid.K_y
+        elif direction == 'z':
+            p = hbar * wf.grid.K_z
+        else:
+            raise ValueError("3D wavefunction supports momentum direction 'x', 'y', or 'z'")
+        return float(np.sum(p * phi_prob) * wf.grid.dk_x * wf.grid.dk_y * wf.grid.dk_z)
     else:
         raise TypeError('Unsupported wavefunction type')
 
