@@ -67,7 +67,7 @@ The first 60 eigenstates of a chaotic billiard computed with LOBPCG. LOBPCG and 
 
 ## 11. Vortex lattice in a rotating BEC
 
-A condensate in a rotating, slightly anisotropic trap develops surface instabilities. Vortices then enter and crystallise into a triangular lattice of 18 vortices (dissipative GPE, following Tsubota, Kasamatsu & Ueda 2002). The mean lattice spacing is within 4.5% of Feynman's rule n_v = mΩ/πℏ, which is exact only for an infinite uniform lattice. The 3D version shows the vortex lines.
+A condensate in a rotating, slightly anisotropic trap develops surface instabilities. Vortices then enter and crystallise into a triangular lattice of 18 vortices (dissipative GPE, following Tsubota, Kasamatsu & Ueda 2002). The mean lattice spacing is within 4.5% (2D) and 2.7% (3D) of Feynman's rule n_v = mΩ/πℏ, which is exact only for an infinite uniform lattice. The 3D state is found by conjugate-gradient energy minimisation (residual below 10⁻⁶) and shows 19 nearly straight vortex lines.
 
 ![Vortex lattice formation](images/11_vortex_lattice_formation.gif)
 ![Vortex lines](images/11_vortex_lines_3d.gif)

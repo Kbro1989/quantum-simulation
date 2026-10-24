@@ -307,6 +307,19 @@ def two_component():
           '|2T − 2V + 2E_int| / V', abs(2 * T - 2 * V + 2 * E_int) / V, 1e-4)
 
 
+def energy_minimiser():
+    from quantumlab.stationary import ground_state_pcg
+    _, info = ground_state_pcg(Grid1D(2048, -100.0, 100.0), SoftCoulomb(), tol=1e-10)
+    check('Stationary states', 'Conjugate-gradient minimiser, hydrogen (V < 0)', 'E₀ = −½ a.u.',
+          '|E₀ + ½|', abs(info.energy + 0.5), 1e-12)
+    grid = Grid3D(48, -8.0, 8.0, 48, -8.0, 8.0, 48, -8.0, 8.0)
+    trap, g = HarmonicTrap((1.0, 1.2, 1.4)), 60.0
+    wf, info = ground_state_pcg(grid, trap, nonlinearity=g, tol=1e-9)
+    T, V, Ei = kinetic_energy_expectation(wf), potential_energy_expectation(wf, trap), interaction_energy(wf, g)
+    check('Gross–Pitaevskii', 'Virial theorem, 3D GP ground state (conjugate gradient)',
+          '2⟨T⟩ − 2⟨V⟩ + 3E_int = 0, no dτ error', '|2T − 2V + 3E_int| / V', abs(2 * T - 2 * V + 3 * Ei) / V, 1e-8)
+
+
 def write_report(path, elapsed):
     lines = [
         '# QuantumLab validation report',
@@ -336,7 +349,7 @@ def main():
     t0 = time.time()
     for fn in (free_spreading, convergence_orders, driven_oscillator, norm_energy_3d, heisenberg_3d,
                vortex_lz, harmonic_spectra, feit_fleck, bright_soliton, gp_virial, gp_dtau_order,
-               rotating_frame, high_harmonics, two_component):
+               rotating_frame, high_harmonics, two_component, energy_minimiser):
         print(f'{fn.__name__}:')
         fn()
     out = Path(__file__).with_name('validation_report.md')

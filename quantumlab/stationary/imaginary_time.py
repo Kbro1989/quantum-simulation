@@ -54,6 +54,12 @@ def ground_state(grid, potential, dtau: float = 0.01, nonlinearity: float = 0.0,
 
     Parameters
     ----------
+    dtau : float or sequence of float
+        Imaginary time step. A decreasing sequence runs a continuation: the
+        large steps relax slow modes (e.g. of vortex lattices) in few steps,
+        the small ones lower the O(dτ²) error floor. ``max_steps`` and
+        ``tol`` apply to each stage, and ``info`` describes the last one
+        (``steps`` is the total).
     nonlinearity : float
         Gross–Pitaevskii coupling g (ψ normalised to 1). g = 0 gives the
         linear Schrödinger ground state.
@@ -81,6 +87,14 @@ def ground_state(grid, potential, dtau: float = 0.01, nonlinearity: float = 0.0,
         for g = 0), ``chemical_potential`` is μ = ⟨ψ|H_GP|ψ⟩ and ``residual``
         is ‖H_GP ψ − μψ‖.
     """
+    if np.ndim(dtau) > 0:
+        wf, total = initial, 0
+        for step_size in dtau:
+            wf, info = ground_state(grid, potential, float(step_size), nonlinearity, wf, tol, max_steps,
+                                    check_interval, hbar, m, orthogonal_to, workers, rotation, backend)
+            total += info.steps
+        info.steps = total
+        return wf, info
     if orthogonal_to and nonlinearity != 0.0:
         raise ValueError('orthogonal_to is only meaningful for the linear problem')
     solver = SplitOperatorSolver(grid, potential, dtau, hbar, m, order=2,

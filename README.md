@@ -36,6 +36,10 @@ Every new feature is checked against exact or independent results; see [Validati
 
 ### New since v1.2 (unreleased)
 
+- **Conjugate-gradient ground states** (`ground_state_pcg`):
+  - preconditioned nonlinear conjugate gradient on the sphere ‖ψ‖² = N, with an exact fixed point (no dτ error);
+  - converges on soft modes such as vortex lattices where imaginary time stalls;
+  - `ground_state` also accepts a decreasing dτ schedule.
 - **Two-component condensates** (`CoupledGPESolver`, `coupled_ground_state`):
   - coupled Gross–Pitaevskii equations, with rotation, damping and GPU support;
   - miscibility, spinodal phase separation, and interlaced two-colour vortex lattices.
@@ -279,7 +283,7 @@ A condensate at rest is placed in a slightly anisotropic trap rotating at Ω = 0
   <img src="images/11_vortex_lattice_formation.gif" width="80%" alt="Vortex lattice formation">
 </p>
 
-The 2D lattice then seeds a 3D condensate in a cigar-shaped rotating trap (128 × 128 × 64 grid). After 3000 imaginary-time steps in the rotating frame (residual ‖(H − ΩL_z)ψ − μψ‖ = 1.6 × 10⁻³), 18 vortex lines run through the cloud. Below they are drawn as tubes where the density falls below 30% of its local average.
+The 2D lattice then seeds a 3D condensate in a cigar-shaped rotating trap (128 × 128 × 64 grid). Vortex lattices have very soft modes. Imaginary time alone, even with a decreasing dτ schedule, stalled near a residual of 3 × 10⁻³ after about 20 000 steps, so the stationary state is found by **conjugate-gradient energy minimisation**, which brings the residual ‖(H − ΩL_z)ψ − μψ‖ below 10⁻⁶ (9.98 × 10⁻⁷ after 9276 iterations). 19 vortex lines run through the cloud. Below they are drawn as tubes where the density falls below 30% of its local average.
 
 <p align="center">
   <img src="images/11_vortex_lines_3d.gif" width="60%" alt="3D vortex lines">
@@ -287,8 +291,10 @@ The 2D lattice then seeds a 3D condensate in a cigar-shaped rotating trap (128 �
 
 **Validation:**
 - Feynman's rule for a rigidly rotating superfluid, n_v = mΩ/(πℏ), predicts a triangular-lattice spacing of 2.129.
-- The measured mean nearest-neighbour spacing is 2.034 ± 0.065 in 2D (−4.5%) and 2.044 ± 0.069 in the z = 0 plane of the 3D state (−4.0%).
-- Feynman's rule is exact for an infinite uniform lattice. This one has only 18 vortices in an inhomogeneous cloud, so deviations of a few percent are expected.
+- The measured mean nearest-neighbour spacing is 2.034 ± 0.065 in 2D (−4.5%) and 2.072 ± 0.059 in the z = 0 plane of the 3D state (−2.7%).
+- Feynman's rule is exact for an infinite uniform lattice. This one has only 18–19 vortices in an inhomogeneous cloud, so deviations of a few percent are expected.
+- All 19 lines can be followed slice by slice through the central region |z| ≤ 0.6Z. The inner lines stay in the same grid cell, and the outer ring bends outwards by at most 0.35 (about two grid spacings).
+- The minimiser lowers the energy at every step, so it ends in a local energy minimum, not necessarily the global one. A run from a different seed converged to an 18-line lattice whose energy is 3 × 10⁻⁵ (relative) higher.
 - The rotating-frame solver itself is checked exactly in the validation suite.
 
 ![Final 2D vortex lattice](images/11_vortex_lattice_2d.png)
@@ -364,7 +370,7 @@ Two condensates with intra-species couplings g₁₁ = g₂₂ = g and inter-spe
 | Energy conservation, 3D, 500 steps (order 4) | E(t) = E(0) | 2.18e-10 |
 | Minimum-uncertainty Gaussian (3D) | Δr_j Δp_j = ℏ/2 for each axis | 4.60e-12 |
 | Angular momentum of a vortex state | ⟨L_z⟩ = ℏ for ψ ∝ (x+iy)e^{−r²/2} | 2.22e-16 |
-| Harmonic spectrum 1D, 10 levels (Lanczos) | E_n = n + ½ | 5.24e-14 |
+| Harmonic spectrum 1D, 10 levels (Lanczos) | E_n = n + ½ | 7.28e-14 |
 | Anisotropic 3D harmonic spectrum, 6 levels (LOBPCG) | E = Σ ω_j (n_j + ½) | 1.42e-13 |
 | 3D ground state by imaginary time | E₀ = ½(ω_x+ω_y+ω_z) | 6.95e-10 |
 | Spectrum from autocorrelation (Feit–Fleck) | peaks of FFT[C(t)] at n + ½ | 1.62e-03 |
@@ -373,7 +379,7 @@ Two condensates with intra-species couplings g₁₁ = g₂₂ = g and inter-spe
 | Imaginary-time GP ground state accuracy | residual ∝ dτ² (ratio 4 when halving dτ) | 2.23e-03 |
 | Coherent state in a frame rotating at Ω = 0.6 | ⟨r'⟩ = R(−Ωt)·(x₀ cos ωt, 0) | 1.89e-08 |
 | Vortex eigenstate in the rotating frame | C(t) = e^{−i(2ℏω − Ωℏ)t/ℏ} | 1.15e-08 |
-| 1D soft-core hydrogen ground state | E₀ = −½ a.u. (I_p = 13.6 eV) | 1.61e-14 |
+| 1D soft-core hydrogen ground state | E₀ = −½ a.u. (I_p = 13.6 eV) | 1.94e-14 |
 | Three-step model maximum return energy | max E_return = 3.17 U_p | 3.63e-05 |
 | HHG: only odd harmonics (800 nm, 10¹⁴ W/cm²) | inversion symmetry forbids even orders | 4.30e-04 |
 | Attosecond pulse train (H11–H21) | one burst per half laser cycle | 3.08e-03 |
@@ -381,8 +387,10 @@ Two condensates with intra-species couplings g₁₁ = g₂₂ = g and inter-spe
 | Phase-separation instability, g₁₂ = 1.3 g | growth rate γ = √(ε_k(2n(g₁₂ − g) − ε_k)) | 9.39e-05 |
 | Manakov point g₁₁ = g₂₂ = g₁₂ | n₁ + n₂ equals the one-component GP ground state | 1.76e-07 |
 | Virial theorem, coupled GP ground state | 2⟨T⟩ − 2⟨V⟩ + 2E_int = 0 (2D) | 2.27e-06 |
+| Conjugate-gradient minimiser, hydrogen (V < 0) | E₀ = −½ a.u. | 7.77e-16 |
+| Virial theorem, 3D GP ground state (conjugate gradient) | 2⟨T⟩ − 2⟨V⟩ + 3E_int = 0, no dτ error | 5.79e-10 |
 
-All 25 checks pass. A few rows report something other than a plain error:
+All 27 checks pass. A few rows report something other than a plain error:
 - The two convergence rows give the deviation of the observed order (2.001 and 3.997) from the theoretical one.
 - The Feit–Fleck row is limited by the spectral resolution 2π/T ≈ 0.031.
 - The GP ground-state accuracy row gives the relative deviation of the observed residual ratio (3.99) from 4.
@@ -507,6 +515,7 @@ Test coverage includes:
 - `test_rotation.py` — rotating-frame coherent state, vortex eigenstate, E − ΩL_z conservation, damping, vortex lattice energy
 - `test_strongfield.py` — laser units, three-step 3.17 U_p, hydrogen ground state, spectra, Gabor maps, attosecond pulses, Ehrenfest acceleration
 - `test_multicomponent.py` — uncoupled limit, Manakov point, Bogoliubov spin mode and phase-separation growth rate, energy and population conservation, coupled virial theorem
+- `test_conjugate_gradient.py` — exact linear ground states (including V < 0 and ℏ, m ≠ 1), GP virial theorem without a dτ floor, rotating vortex lattice below imaginary time
 - `test_backends.py` — GPU code path against NumPy through a strict emulated device; a real CuPy comparison runs where a CUDA device exists
 
 ---
