@@ -36,7 +36,7 @@ Every new feature is checked against exact or independent results; see [Validati
 - **Rotating frame** (`rotation=Ω`): H → H − ΩL_z in 2D and 3D. The rotation term is applied exactly with axis-wise FFTs and keeps the 2nd/4th-order accuracy.
 - **Dissipative dynamics** (`damping=γ`): (i − γ)ℏ∂ψ/∂t = Hψ at fixed norm, used to model vortex-lattice formation.
 - **Vortex detection** (`vortex_positions`), from the phase winding around every grid cell.
-- **GPU acceleration** (`backend='cupy'` or `'auto'`): the whole split-operator engine runs on a CUDA GPU through CuPy. During `evolve`, ψ stays on the device.
+- **GPU acceleration** (`backend='cupy'` or `'auto'`): the whole split-operator engine runs on a CUDA GPU through CuPy. During `evolve`, ψ stays on the device. Verified on an NVIDIA Tesla T4: all 130 tests pass, and the results match the CPU to ~10⁻¹⁵.
 - **Continuous integration**: GitHub Actions runs the test suite on Python 3.10–3.14 and the validation suite on every push and pull request.
 
 ### New in v1.1
@@ -359,6 +359,19 @@ wf = solver.evolve(wf, 10_000)   # ψ stays on the GPU; one copy back at the end
 - `benchmarks/gpu_split_operator.py` reports timings and the GPU–CPU difference.
 
 GitHub's hosted CI runners have no GPU, so the real-CuPy test is skipped there. To run it yourself on a free cloud GPU, open the validation notebook: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rasidi3112/quantum-simulation/blob/main/notebooks/gpu_validation.ipynb). Choose a GPU runtime and *Run all*. It runs the full test suite including the real-CuPy tests, benchmarks CPU vs GPU, and prints a summary.
+
+**Measured on real hardware** (Google Colab, NVIDIA Tesla T4, CuPy 14.0.1, Python 3.13):
+- The full test suite passes, **130 passed with 0 skipped**, including the 14 real-GPU tests.
+- The benchmark below is a 3D rotating Gross–Pitaevskii run (order 2, g = 200, Ω = 0.7), timed over 50 steps.
+
+| Grid | Points | Colab CPU (2 vCPU) ms/step | T4 GPU ms/step | Speed-up | max \|ψ_GPU − ψ_CPU\| |
+|---|---|---|---|---|---|
+| 64³ | 262,144 | 33.1 | 4.4 | 7.6× | 2.0e-15 |
+| 96³ | 884,736 | 132.9 | 12.3 | 10.8× | 2.1e-15 |
+| 128³ | 2,097,152 | 363.6 | 29.2 | 12.5× | 2.6e-15 |
+| 160³ | 4,096,000 | 721.5 | 78.2 | 9.2× | 1.5e-15 |
+
+The speed-up depends on the CPU it is compared with. Colab's CPU has only 2 vCPUs. On an 8-core Apple M1 the same 128³ run takes about 87 ms/step, so a T4 is roughly 3× faster than that machine.
 
 ### 2. Run Simulations
 
