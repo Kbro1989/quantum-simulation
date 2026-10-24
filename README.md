@@ -1,6 +1,7 @@
 # QuantumLab: Research-Grade Quantum Simulation Framework
 
 [![tests](https://github.com/rasidi3112/quantum-simulation/actions/workflows/tests.yml/badge.svg)](https://github.com/rasidi3112/quantum-simulation/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A high-performance, modular Python library for numerical quantum mechanics simulations. QuantumLab solves the Time-Dependent Schrödinger Equation (TDSE) in **1D, 2D, and 3D** using the Split-Step Fourier Method (SSFM) to model quantum wave packet dynamics with high physical fidelity. It also solves the nonlinear **Gross–Pitaevskii equation** for Bose–Einstein condensates and computes **stationary states** with matrix-free eigensolvers.
 
@@ -471,3 +472,23 @@ wf = solver.evolve(wf, 200)
 
 IsosurfaceRenderer(grid, levels=(0.5, 0.15, 0.03)).save(wf.psi, "vortex.png", t=solver.t)
 ```
+
+---
+
+## Citation
+
+If you use QuantumLab in your work, please cite it. GitHub's **"Cite this repository"** button (generated from [`CITATION.cff`](CITATION.cff)) provides APA and BibTeX entries:
+
+```bibtex
+@software{quantumlab,
+  author  = {Rasidi, Ahmad and Kbro1989},
+  title   = {QuantumLab: Quantum Simulation Framework},
+  version = {1.2.0},
+  year    = {2026},
+  url     = {https://github.com/rasidi3112/quantum-simulation}
+}
+```
+
+## License
+
+QuantumLab is released under the [MIT License](LICENSE).
