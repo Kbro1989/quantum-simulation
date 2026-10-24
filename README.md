@@ -36,6 +36,9 @@ Every new feature is checked against exact or independent results; see [Validati
 
 ### New since v1.2 (unreleased)
 
+- **Two-component condensates** (`CoupledGPESolver`, `coupled_ground_state`):
+  - coupled Gross–Pitaevskii equations, with rotation, damping and GPU support;
+  - miscibility, spinodal phase separation, and interlaced two-colour vortex lattices.
 - **Strong-field physics** (`quantumlab.strongfield`):
   - high-harmonic generation from a hydrogen atom (`SoftCoulomb`) in intense laser pulses (`flat_top_envelope`);
   - harmonic spectra, Gabor time–frequency maps, the classical three-step model, and attosecond pulse synthesis.
@@ -80,6 +83,7 @@ quantumlab/
 │   ├── split_step_3d.py     # 3D Split-Step Fourier solver (CPU/SciPy)
 │   ├── split_step_3d_gpu.py # 3D SSFM with CuPy GPU acceleration + CPU fallback
 │   ├── split_operator.py    # Generic 1D/2D/3D engine: order 2/4, V(r,t), GPE, imaginary time, rotation, damping
+│   ├── multicomponent.py    # Coupled multi-component Gross–Pitaevskii solver
 │   └── backends.py          # NumPy/SciPy (CPU) and CuPy (CUDA GPU) array backends
 ├── stationary/
 │   ├── eigensolver.py       # Lanczos / preconditioned LOBPCG on a matrix-free Hamiltonian
@@ -120,7 +124,7 @@ quantumlab/
 
 ## Example Gallery
 
-The framework includes 12 pre-built simulation scripts under the `examples/` directory. Run any example to generate high-quality scientific visualizations saved to the `output/` directory.
+The framework includes 13 pre-built simulation scripts under the `examples/` directory. Run any example to generate high-quality scientific visualizations saved to the `output/` directory.
 
 ---
 
@@ -315,6 +319,35 @@ A hydrogen atom (1D soft-core model, I_p = 13.6 eV) is driven by an intense 800 
 
 ![Cutoff scan](images/12_hhg_cutoff_scan.png)
 
+### 13. Two-Component Condensates (`examples/13_two_component_bec.py`)
+
+Two condensates with intra-species couplings g₁₁ = g₂₂ = g and inter-species coupling g₁₂ obey coupled Gross–Pitaevskii equations. They mix when g₁₂² < g₁₁g₂₂ and separate when g₁₂² > g₁₁g₂₂.
+
+<p align="center">
+  <img src="images/13_phase_separation.gif" width="45%" alt="Spinodal phase separation">
+  <img src="images/13_vortex_lattices.gif" width="45%" alt="Interlaced vortex lattices">
+</p>
+<p align="center"><em>Left: a uniform mixture with g₁₂ = 1.3g separates into domains that coarsen. Right: a rotating two-component condensate forms two interlaced vortex lattices (pink and cyan).</em></p>
+
+**Validation:**
+- **Miscibility:** in a trap, the ground-state overlap Λ stays 1.000 up to g₁₂/g = 1.05 and drops to 0.72, 0.31 and 0.16 at 1.1, 1.2 and 1.4. A finite cloud shifts the uniform threshold g₁₂ = g slightly upward, because the domain wall costs gradient energy.
+- **Spinodal decomposition:**
+  - the spin mode on the |k| ≈ k\* shell grows at 0.2992 against the Bogoliubov rate γ\* = n(g₁₂ − g) = 0.3000 (−0.3%);
+  - the structure factor peaks at k = 0.785 against k\* = 0.775 (within one bin);
+  - the populations are conserved to 10⁻¹³.
+- **Two-colour vortex lattices:** with g₁₂ = 0.5g, Ω = 0.8 and damping, 16 + 15 vortices form. **Every** vortex core of one component sits on a density maximum of the other, at a median 1.8× its local average.
+- **Exact limits, from the test and validation suites:**
+  - g₁₂ = 0 reproduces two independent condensates bit for bit;
+  - at the Manakov point g₁₁ = g₂₂ = g₁₂ the total density equals the one-component ground state to 2·10⁻⁷;
+  - the Bogoliubov spin-mode frequency is reproduced to 10⁻⁹ relative;
+  - the coupled virial theorem holds to 2·10⁻⁶.
+
+![Miscibility](images/13_miscibility.png)
+
+![Growth of the phase-separation instability](images/13_phase_separation_growth.png)
+
+![Interlaced vortex lattices](images/13_vortex_lattices.png)
+
 ---
 
 ## Validation
@@ -331,7 +364,7 @@ A hydrogen atom (1D soft-core model, I_p = 13.6 eV) is driven by an intense 800 
 | Energy conservation, 3D, 500 steps (order 4) | E(t) = E(0) | 2.18e-10 |
 | Minimum-uncertainty Gaussian (3D) | Δr_j Δp_j = ℏ/2 for each axis | 4.60e-12 |
 | Angular momentum of a vortex state | ⟨L_z⟩ = ℏ for ψ ∝ (x+iy)e^{−r²/2} | 2.22e-16 |
-| Harmonic spectrum 1D, 10 levels (Lanczos) | E_n = n + ½ | 5.68e-14 |
+| Harmonic spectrum 1D, 10 levels (Lanczos) | E_n = n + ½ | 5.24e-14 |
 | Anisotropic 3D harmonic spectrum, 6 levels (LOBPCG) | E = Σ ω_j (n_j + ½) | 1.42e-13 |
 | 3D ground state by imaginary time | E₀ = ½(ω_x+ω_y+ω_z) | 6.95e-10 |
 | Spectrum from autocorrelation (Feit–Fleck) | peaks of FFT[C(t)] at n + ½ | 1.62e-03 |
@@ -340,12 +373,16 @@ A hydrogen atom (1D soft-core model, I_p = 13.6 eV) is driven by an intense 800 
 | Imaginary-time GP ground state accuracy | residual ∝ dτ² (ratio 4 when halving dτ) | 2.23e-03 |
 | Coherent state in a frame rotating at Ω = 0.6 | ⟨r'⟩ = R(−Ωt)·(x₀ cos ωt, 0) | 1.89e-08 |
 | Vortex eigenstate in the rotating frame | C(t) = e^{−i(2ℏω − Ωℏ)t/ℏ} | 1.15e-08 |
-| 1D soft-core hydrogen ground state | E₀ = −½ a.u. (I_p = 13.6 eV) | 3.21e-14 |
+| 1D soft-core hydrogen ground state | E₀ = −½ a.u. (I_p = 13.6 eV) | 1.61e-14 |
 | Three-step model maximum return energy | max E_return = 3.17 U_p | 3.63e-05 |
 | HHG: only odd harmonics (800 nm, 10¹⁴ W/cm²) | inversion symmetry forbids even orders | 4.30e-04 |
 | Attosecond pulse train (H11–H21) | one burst per half laser cycle | 3.08e-03 |
+| Bogoliubov spin mode, miscible mixture (t ≤ 60) | δ(n₁−n₂) ∝ cos ω_s t, ω_s² = ε_k(ε_k + 2n(g − g₁₂)) | 8.53e-10 |
+| Phase-separation instability, g₁₂ = 1.3 g | growth rate γ = √(ε_k(2n(g₁₂ − g) − ε_k)) | 9.39e-05 |
+| Manakov point g₁₁ = g₂₂ = g₁₂ | n₁ + n₂ equals the one-component GP ground state | 1.76e-07 |
+| Virial theorem, coupled GP ground state | 2⟨T⟩ − 2⟨V⟩ + 2E_int = 0 (2D) | 2.27e-06 |
 
-All 21 checks pass. A few rows report something other than a plain error:
+All 25 checks pass. A few rows report something other than a plain error:
 - The two convergence rows give the deviation of the observed order (2.001 and 3.997) from the theoretical one.
 - The Feit–Fleck row is limited by the spectral resolution 2π/T ≈ 0.031.
 - The GP ground-state accuracy row gives the relative deviation of the observed residual ratio (3.99) from 4.
@@ -435,6 +472,7 @@ python examples/09_soliton_collision.py
 python examples/10_quantum_chaos_stadium.py
 python examples/11_rotating_bec_vortex_lattice.py
 python examples/12_high_harmonic_generation.py
+python examples/13_two_component_bec.py
 
 # CPU vs GPU timing (GPU columns appear only with CuPy and a CUDA device)
 python benchmarks/gpu_split_operator.py
@@ -468,6 +506,7 @@ Test coverage includes:
 - `test_volume_3d.py` — isosurface geometry, phase sampling, PNG/GIF/HTML export, overlays
 - `test_rotation.py` — rotating-frame coherent state, vortex eigenstate, E − ΩL_z conservation, damping, vortex lattice energy
 - `test_strongfield.py` — laser units, three-step 3.17 U_p, hydrogen ground state, spectra, Gabor maps, attosecond pulses, Ehrenfest acceleration
+- `test_multicomponent.py` — uncoupled limit, Manakov point, Bogoliubov spin mode and phase-separation growth rate, energy and population conservation, coupled virial theorem
 - `test_backends.py` — GPU code path against NumPy through a strict emulated device; a real CuPy comparison runs where a CUDA device exists
 
 ---

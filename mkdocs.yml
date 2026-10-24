@@ -80,6 +80,7 @@ nav:
       - Potentials: guide/potentials.md
       - Observables: guide/observables.md
       - Visualization: guide/visualization.md
+      - Two-component condensates: guide/multicomponent.md
       - Strong-field physics: guide/strongfield.md
       - GPU acceleration: guide/gpu.md
       - YAML batch runner: guide/runner.md

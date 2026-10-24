@@ -4,6 +4,8 @@ Generated from the docstrings in the source code.
 
 ::: quantumlab.solvers.split_operator
 
+::: quantumlab.solvers.multicomponent
+
 ::: quantumlab.solvers.backends
 
 ::: quantumlab.solvers.split_step_1d

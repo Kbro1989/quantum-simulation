@@ -58,3 +58,10 @@ The rotation term −ΩL_z = Ω(y p_x − x p_y) is split with the kinetic energ
 ## Legacy solvers
 
 `SplitStep1DSolver`, `SplitStep2DSolver`, `SplitStep3DSolver` and `SplitStep3DGPU` from the first release are kept for compatibility. For a static potential, `SplitOperatorSolver(order=2)` gives bit-identical results to them.
+
+## Numerical stability of nonlinear runs
+
+Every factor of the split-step method is unitary. Still, for nonlinear problems on a uniform or broad background it has a parametric instability when the kinetic phase of the shortest grid wavelength per (sub)step exceeds π (Weideman & Herbst 1986). Keep ℏk_max²/2m · |w|dt < π with k_max = π/dx, where |w| ≤ 1.71 for order 4. Localised states such as solitons and trapped condensates are much less sensitive.
+
+Two-component condensates are covered in [Two-component condensates](multicomponent.md).
+
