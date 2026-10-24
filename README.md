@@ -358,7 +358,7 @@ wf = solver.evolve(wf, 10_000)   # ψ stays on the GPU; one copy back at the end
 - On machines with a CUDA device, `tests/test_backends.py` additionally compares real CuPy results with the CPU.
 - `benchmarks/gpu_split_operator.py` reports timings and the GPU–CPU difference.
 
-GitHub's hosted CI runners have no GPU, so the real-CuPy test is skipped there.
+GitHub's hosted CI runners have no GPU, so the real-CuPy test is skipped there. To run it yourself on a free cloud GPU, open the validation notebook: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rasidi3112/quantum-simulation/blob/main/notebooks/gpu_validation.ipynb). Choose a GPU runtime and *Run all*. It runs the full test suite including the real-CuPy tests, benchmarks CPU vs GPU, and prints a summary.
 
 ### 2. Run Simulations
 
