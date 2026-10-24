@@ -8,6 +8,8 @@ Generated from the docstrings in the source code.
 
 ::: quantumlab.potentials.traps
 
+::: quantumlab.potentials.coulomb
+
 ::: quantumlab.potentials.apertures
 
 ::: quantumlab.potentials.time_dependent

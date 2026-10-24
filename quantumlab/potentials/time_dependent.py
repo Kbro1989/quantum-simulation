@@ -103,3 +103,23 @@ def sin2_envelope(duration: float) -> Callable[[float], float]:
             return 0.0
         return float(np.sin(np.pi * t / duration) ** 2)
     return envelope
+
+
+def flat_top_envelope(duration: float, ramp: float) -> Callable[[float], float]:
+    """
+    Pulse envelope with sin² turn-on and turn-off of length ``ramp`` and a
+    flat top in between; zero outside 0 ≤ t ≤ duration. Long flat tops give
+    narrow, well-resolved harmonic lines.
+    """
+    if not 0 < 2 * ramp <= duration:
+        raise ValueError('need 0 < 2·ramp ≤ duration')
+
+    def envelope(t: float) -> float:
+        if t <= 0.0 or t >= duration:
+            return 0.0
+        if t < ramp:
+            return float(np.sin(0.5 * np.pi * t / ramp) ** 2)
+        if t > duration - ramp:
+            return float(np.sin(0.5 * np.pi * (duration - t) / ramp) ** 2)
+        return 1.0
+    return envelope

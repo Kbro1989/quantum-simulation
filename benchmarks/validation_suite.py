@@ -13,7 +13,10 @@ from pathlib import Path
 import numpy as np
 from quantumlab.core.grid import Grid1D, Grid2D, Grid3D
 from quantumlab.core.wavefunction import WaveFunction1D, WaveFunction2D, WaveFunction3D
-from quantumlab.potentials import HarmonicTrap, DipoleDrive, CustomPotential, GaussianBarrier
+from quantumlab.potentials import (HarmonicTrap, DipoleDrive, CustomPotential, GaussianBarrier, SoftCoulomb,
+                                  flat_top_envelope)
+from quantumlab.core.absorbing_boundary import AbsorbingBoundaryLayer
+from quantumlab import strongfield as sf
 from quantumlab.solvers.split_operator import SplitOperatorSolver
 from quantumlab.stationary import eigenstates, ground_state
 from quantumlab.observables import (
@@ -202,6 +205,43 @@ def rotating_frame():
           '|C(t) − exact|', abs(C - np.exp(-1j * (2.0 - Om) * solver.t)), 1e-7)
 
 
+def high_harmonics():
+    grid = Grid1D(4096, -200.0, 200.0)
+    atom = SoftCoulomb()
+    E, states = eigenstates(grid, atom, n_states=1)
+    check('Strong-field physics', '1D soft-core hydrogen ground state', 'E₀ = −½ a.u. (I_p = 13.6 eV)',
+          '|E₀ + ½|', abs(E[0] + 0.5), 1e-9)
+    _, _, ke = sf.classical_returns(4000)
+    check('Strong-field physics', 'Three-step model maximum return energy', 'max E_return = 3.17 U_p',
+          '|max/U_p − 3.1731|', abs(ke.max() - 3.1731), 2e-4)
+    w = sf.wavelength_to_omega(800.0)
+    period = 2 * np.pi / w
+    laser = DipoleDrive(atom, F0=sf.intensity_to_field(1e14), omega=w,
+                        envelope=flat_top_envelope(20 * period, 3 * period))
+    solver = SplitOperatorSolver(grid, laser, 0.05, order=4, absorber=AbsorbingBoundaryLayer(grid, 40.0))
+    acc = []
+    solver.evolve(states[0], int(round(20 * period / 0.05)),
+                  callback=lambda n, t, wf: acc.append(sf.dipole_acceleration(wf, atom, laser.force(t))))
+    acc = np.array(acc)
+    H, S = sf.harmonic_spectrum(acc, 0.05, w)
+
+    def level(q):
+        return S[(H > q - 0.3) & (H < q + 0.3)].max()
+
+    ratio = np.median([level(q) for q in range(5, 20, 2)]) / np.median([level(q) for q in range(6, 21, 2)])
+    check('Strong-field physics', 'HHG: only odd harmonics (800 nm, 10¹⁴ W/cm²)',
+          'inversion symmetry forbids even orders', f'even/odd intensity, H5–H20 (odd/even = {ratio:.1e})',
+          1.0 / ratio, 1e-2)
+    P = sf.attosecond_pulses(acc, 0.05, w, 11, 21)
+    t = np.arange(1, len(acc) + 1) * 0.05
+    m = (t > 8 * period) & (t < 12 * period)
+    from scipy.signal import find_peaks
+    peaks, _ = find_peaks(P[m], distance=int(0.3 * period / 0.05), height=0.2 * P[m].max())
+    spacing = np.diff(t[m][peaks]) / period
+    check('Strong-field physics', 'Attosecond pulse train (H11–H21)', 'one burst per half laser cycle',
+          'max |spacing − ½| (cycles)', float(np.max(np.abs(spacing - 0.5))), 0.01)
+
+
 def write_report(path, elapsed):
     lines = [
         '# QuantumLab validation report',
@@ -231,7 +271,7 @@ def main():
     t0 = time.time()
     for fn in (free_spreading, convergence_orders, driven_oscillator, norm_energy_3d, heisenberg_3d,
                vortex_lz, harmonic_spectra, feit_fleck, bright_soliton, gp_virial, gp_dtau_order,
-               rotating_frame):
+               rotating_frame, high_harmonics):
         print(f'{fn.__name__}:')
         fn()
     out = Path(__file__).with_name('validation_report.md')

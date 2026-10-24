@@ -24,6 +24,7 @@ screen = create_potential('double_slit', V0=60.0, separation=5.0, aperture='pinh
 | `harmonic_trap` | `HarmonicTrap` | anisotropic harmonic trap with an optional centre |
 | `aperture_screen`, `double_slit` | `ApertureScreen` | opaque screen with N slits or circular pinholes (2D/3D) |
 | `stadium` | `StadiumBilliard` | soft-walled Bunimovich stadium (classically chaotic) |
+| `soft_coulomb` | `SoftCoulomb` | soft-core Coulomb potential −Z/√(r² + a²); hydrogen model for strong-field physics |
 | `crystal` | `CrystalPotential` | sinusoidal lattice |
 | `disorder` | `RandomDisorder` | cell-based random potential |
 
@@ -48,5 +49,7 @@ drive = DipoleDrive(base=HarmonicTrap(1.0), F0=0.5, omega=0.6, axis='x', envelop
 # any V(r, t)
 shaken = TimeDependentCustomPotential(lambda x, t: 0.5 * (x - 0.5 * np.sin(t))**2)
 ```
+
+Envelopes: `sin2_envelope(duration)` and `flat_top_envelope(duration, ramp)`.
 
 Solvers detect these through `time_dependent = True` and call `evaluate_at(grid, t)` at every sub-step.

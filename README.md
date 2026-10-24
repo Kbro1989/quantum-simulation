@@ -34,6 +34,12 @@ Every new feature is checked against exact or independent results; see [Validati
 - **2D Visualization**: Probability density heatmaps, snapshot grids, and orthogonal slices for 3D wavefunctions.
 - **3D Space-Time Rendering**: Premium 3D surface visualizations of 1D probability density evolution over time.
 
+### New since v1.2 (unreleased)
+
+- **Strong-field physics** (`quantumlab.strongfield`):
+  - high-harmonic generation from a hydrogen atom (`SoftCoulomb`) in intense laser pulses (`flat_top_envelope`);
+  - harmonic spectra, Gabor time–frequency maps, the classical three-step model, and attosecond pulse synthesis.
+
 ### New in v1.2
 
 - **Rotating frame** (`rotation=Ω`): H → H − ΩL_z in 2D and 3D. The rotation term is applied exactly with axis-wise FFTs and keeps the 2nd/4th-order accuracy.
@@ -89,7 +95,8 @@ quantumlab/
 │   ├── custom.py            # CustomPotential (user-defined callable, 1D/2D/3D)
 │   ├── traps.py             # HarmonicTrap (anisotropic, 1D/2D/3D)
 │   ├── apertures.py         # ApertureScreen (multi-slit/pinhole), StadiumBilliard
-│   └── time_dependent.py    # DipoleDrive, TimeDependentCustomPotential, sin2_envelope
+│   ├── coulomb.py           # SoftCoulomb (soft-core Coulomb atom, analytic gradient)
+│   └── time_dependent.py    # DipoleDrive, TimeDependentCustomPotential, sin2/flat-top envelopes
 ├── observables/
 │   ├── expectation.py       # Position, momentum, energy expectation values & uncertainties
 │   ├── coefficients.py      # Transmission & reflection coefficients
@@ -103,6 +110,7 @@ quantumlab/
 │   ├── animation.py         # Time-evolution animation exporter (MP4/GIF)
 │   ├── volume_3d.py         # 3D isosurfaces with phase colouring, animations, HTML export
 │   └── style.py             # Theme management (light/dark)
+├── strongfield.py           # Laser units, three-step model, HHG spectra, Gabor maps, attosecond pulses
 ├── config.py                # Default config loader (YAML-based)
 ├── constants.py             # Physical constants (atomic units)
 └── runner.py                # HPC batch simulation runner (YAML-driven)
@@ -112,7 +120,7 @@ quantumlab/
 
 ## Example Gallery
 
-The framework includes 11 pre-built simulation scripts under the `examples/` directory. Run any example to generate high-quality scientific visualizations saved to the `output/` directory.
+The framework includes 12 pre-built simulation scripts under the `examples/` directory. Run any example to generate high-quality scientific visualizations saved to the `output/` directory.
 
 ---
 
@@ -285,6 +293,28 @@ The 2D lattice then seeds a 3D condensate in a cigar-shaped rotating trap (128 �
 
 ![3D vortex lines](images/11_vortex_lines_3d.png)
 
+### 12. High-Harmonic Generation in Hydrogen (`examples/12_high_harmonic_generation.py`)
+
+A hydrogen atom (1D soft-core model, I_p = 13.6 eV) is driven by an intense 800 nm laser pulse (10¹⁴ W/cm², flat-top, 20 cycles). In each half cycle the electron tunnels out, is driven back by the field and recollides with the ion, emitting high harmonics. This is the three-step model of Corkum (1993) behind attosecond science, recognised by the 2023 Nobel Prize in Physics.
+
+**Validation:**
+- **Hydrogen:** the ground-state energy is −0.5 a.u. = −13.606 eV to 10⁻¹³.
+- **Odd harmonics only:** even orders are **2300× weaker**, as the inversion symmetry of atom plus field requires.
+- **Emission times:** a Gabor time–frequency analysis shows each harmonic emitted twice per cycle, at the classical return times of the short and long trajectories. The median deviation is 0.02–0.08 cycle for H11–H19, comparable to the 0.053-cycle (142 as) resolution of the analysis.
+- **Attosecond pulses:** filtering H11–H21 gives bursts of **≈ 200 as** every half cycle (spacing 0.499–0.503 cycle).
+- **Cutoff:** it grows linearly with U_p across an 8-intensity scan. The fitted spectral edge is (3.48 ± 0.20) U_p + (1.52 ± 0.08) I_p, against 3.17 U_p + I_p (classical) and 3.17 U_p + 1.32 I_p (quantum-corrected). A single 1D atom has a plateau with deep interference minima and a gradual roll-off, so the extracted edge depends on its definition. The linear growth is the robust result.
+- **Ionisation:** 1D models over-estimate it compared with a 3D atom. Here about 91% of the electron is ionised by the end of the pulse.
+
+![HHG spectrum](images/12_hhg_spectrum.png)
+
+![Time-frequency analysis](images/12_hhg_time_frequency.png)
+
+![Attosecond pulse train](images/12_attosecond_pulses.png)
+
+![Electron in space and time](images/12_electron_spacetime.png)
+
+![Cutoff scan](images/12_hhg_cutoff_scan.png)
+
 ---
 
 ## Validation
@@ -301,7 +331,7 @@ The 2D lattice then seeds a 3D condensate in a cigar-shaped rotating trap (128 �
 | Energy conservation, 3D, 500 steps (order 4) | E(t) = E(0) | 2.18e-10 |
 | Minimum-uncertainty Gaussian (3D) | Δr_j Δp_j = ℏ/2 for each axis | 4.60e-12 |
 | Angular momentum of a vortex state | ⟨L_z⟩ = ℏ for ψ ∝ (x+iy)e^{−r²/2} | 2.22e-16 |
-| Harmonic spectrum 1D, 10 levels (Lanczos) | E_n = n + ½ | 7.02e-14 |
+| Harmonic spectrum 1D, 10 levels (Lanczos) | E_n = n + ½ | 5.68e-14 |
 | Anisotropic 3D harmonic spectrum, 6 levels (LOBPCG) | E = Σ ω_j (n_j + ½) | 1.42e-13 |
 | 3D ground state by imaginary time | E₀ = ½(ω_x+ω_y+ω_z) | 6.95e-10 |
 | Spectrum from autocorrelation (Feit–Fleck) | peaks of FFT[C(t)] at n + ½ | 1.62e-03 |
@@ -310,11 +340,16 @@ The 2D lattice then seeds a 3D condensate in a cigar-shaped rotating trap (128 �
 | Imaginary-time GP ground state accuracy | residual ∝ dτ² (ratio 4 when halving dτ) | 2.23e-03 |
 | Coherent state in a frame rotating at Ω = 0.6 | ⟨r'⟩ = R(−Ωt)·(x₀ cos ωt, 0) | 1.89e-08 |
 | Vortex eigenstate in the rotating frame | C(t) = e^{−i(2ℏω − Ωℏ)t/ℏ} | 1.15e-08 |
+| 1D soft-core hydrogen ground state | E₀ = −½ a.u. (I_p = 13.6 eV) | 3.21e-14 |
+| Three-step model maximum return energy | max E_return = 3.17 U_p | 3.63e-05 |
+| HHG: only odd harmonics (800 nm, 10¹⁴ W/cm²) | inversion symmetry forbids even orders | 4.30e-04 |
+| Attosecond pulse train (H11–H21) | one burst per half laser cycle | 3.08e-03 |
 
-All 17 checks pass. A few rows report something other than a plain error:
+All 21 checks pass. A few rows report something other than a plain error:
 - The two convergence rows give the deviation of the observed order (2.001 and 3.997) from the theoretical one.
 - The Feit–Fleck row is limited by the spectral resolution 2π/T ≈ 0.031.
-- The last row gives the relative deviation of the observed residual ratio (3.99) from 4.
+- The GP ground-state accuracy row gives the relative deviation of the observed residual ratio (3.99) from 4.
+- The HHG odd-harmonics row gives the even/odd intensity ratio.
 
 ---
 
@@ -399,6 +434,7 @@ python examples/08_3d_bec_time_of_flight.py
 python examples/09_soliton_collision.py
 python examples/10_quantum_chaos_stadium.py
 python examples/11_rotating_bec_vortex_lattice.py
+python examples/12_high_harmonic_generation.py
 
 # CPU vs GPU timing (GPU columns appear only with CuPy and a CUDA device)
 python benchmarks/gpu_split_operator.py
@@ -431,6 +467,7 @@ Test coverage includes:
 - `test_new_potentials_and_observables.py` — traps, apertures, stadium, current, ⟨L_z⟩, Feit–Fleck spectrum
 - `test_volume_3d.py` — isosurface geometry, phase sampling, PNG/GIF/HTML export, overlays
 - `test_rotation.py` — rotating-frame coherent state, vortex eigenstate, E − ΩL_z conservation, damping, vortex lattice energy
+- `test_strongfield.py` — laser units, three-step 3.17 U_p, hydrogen ground state, spectra, Gabor maps, attosecond pulses, Ehrenfest acceleration
 - `test_backends.py` — GPU code path against NumPy through a strict emulated device; a real CuPy comparison runs where a CUDA device exists
 
 ---

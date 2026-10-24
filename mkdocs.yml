@@ -80,6 +80,7 @@ nav:
       - Potentials: guide/potentials.md
       - Observables: guide/observables.md
       - Visualization: guide/visualization.md
+      - Strong-field physics: guide/strongfield.md
       - GPU acceleration: guide/gpu.md
       - YAML batch runner: guide/runner.md
   - Examples: examples.md
@@ -90,6 +91,7 @@ nav:
       - Stationary states: api/stationary.md
       - Potentials: api/potentials.md
       - Observables: api/observables.md
+      - Strong-field physics: api/strongfield.md
       - Visualization: api/visualization.md
       - Runner: api/runner.md
   - Citing & license: citing.md
