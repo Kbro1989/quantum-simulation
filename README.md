@@ -1,5 +1,7 @@
 # QuantumLab: Research-Grade Quantum Simulation Framework
 
+[![tests](https://github.com/rasidi3112/quantum-simulation/actions/workflows/tests.yml/badge.svg)](https://github.com/rasidi3112/quantum-simulation/actions/workflows/tests.yml)
+
 A high-performance, modular Python library for numerical quantum mechanics simulations. QuantumLab solves the Time-Dependent Schrödinger Equation (TDSE) in **1D, 2D, and 3D** using the Split-Step Fourier Method (SSFM) to model quantum wave packet dynamics with high physical fidelity. It also solves the nonlinear **Gross–Pitaevskii equation** for Bose–Einstein condensates and computes **stationary states** with matrix-free eigensolvers.
 
 <p align="center">
@@ -27,6 +29,14 @@ Every new feature is checked against exact or independent results; see [Validati
 - **Aesthetic Plotting**: Publication-ready scientific plotting with LaTeX markup, custom typography, light/dark themes, and dual-space (position and momentum side-by-side) analyses.
 - **2D Visualization**: Probability density heatmaps, snapshot grids, and orthogonal slices for 3D wavefunctions.
 - **3D Space-Time Rendering**: Premium 3D surface visualizations of 1D probability density evolution over time.
+
+### New in v1.2
+
+- **Rotating frame** (`rotation=Ω`): H → H − ΩL_z in 2D and 3D. The rotation term is applied exactly with axis-wise FFTs and keeps the 2nd/4th-order accuracy.
+- **Dissipative dynamics** (`damping=γ`): (i − γ)ℏ∂ψ/∂t = Hψ at fixed norm, used to model vortex-lattice formation.
+- **Vortex detection** (`vortex_positions`), from the phase winding around every grid cell.
+- **GPU acceleration** (`backend='cupy'` or `'auto'`): the whole split-operator engine runs on a CUDA GPU through CuPy. During `evolve`, ψ stays on the device.
+- **Continuous integration**: GitHub Actions runs the test suite on Python 3.10–3.14 and the validation suite on every push and pull request.
 
 ### New in v1.1
 
@@ -59,7 +69,8 @@ quantumlab/
 │   ├── split_step_2d.py     # 2D Split-Step Fourier solver
 │   ├── split_step_3d.py     # 3D Split-Step Fourier solver (CPU/SciPy)
 │   ├── split_step_3d_gpu.py # 3D SSFM with CuPy GPU acceleration + CPU fallback
-│   └── split_operator.py    # Generic 1D/2D/3D engine: order 2/4, V(r,t), GPE, imaginary time
+│   ├── split_operator.py    # Generic 1D/2D/3D engine: order 2/4, V(r,t), GPE, imaginary time, rotation, damping
+│   └── backends.py          # NumPy/SciPy (CPU) and CuPy (CUDA GPU) array backends
 ├── stationary/
 │   ├── eigensolver.py       # Lanczos / preconditioned LOBPCG on a matrix-free Hamiltonian
 │   ├── imaginary_time.py    # Ground & excited states, GP ground states
@@ -79,7 +90,7 @@ quantumlab/
 │   ├── expectation.py       # Position, momentum, energy expectation values & uncertainties
 │   ├── coefficients.py      # Transmission & reflection coefficients
 │   ├── momentum.py          # Momentum-space wavefunction
-│   ├── current.py           # Probability current, ⟨L_z⟩, autocorrelation
+│   ├── current.py           # Probability current, ⟨L_z⟩, autocorrelation, vortex detection
 │   └── nonlinear.py         # GP interaction energy, energy functional, chemical potential
 ├── visualization/
 │   ├── plots_1d.py          # 1D wavefunction & dual-space plots
@@ -97,7 +108,7 @@ quantumlab/
 
 ## Example Gallery
 
-The framework includes 10 pre-built simulation scripts under the `examples/` directory. Run any example to generate high-quality scientific visualizations saved to the `output/` directory.
+The framework includes 11 pre-built simulation scripts under the `examples/` directory. Run any example to generate high-quality scientific visualizations saved to the `output/` directory.
 
 ---
 
@@ -244,6 +255,32 @@ The first 60 eigenstates of a soft-walled Bunimovich stadium, which is classical
 
 ![Weyl law](images/10_stadium_weyl.png)
 
+### 11. Vortex Lattice in a Rotating BEC (`examples/11_rotating_bec_vortex_lattice.py`)
+
+A condensate at rest is placed in a slightly anisotropic trap rotating at Ω = 0.8ω. In the rotating frame the dissipative Gross–Pitaevskii equation (i − γ)ℏ∂ψ/∂t = (H − ΩL_z)ψ is integrated with γ = 0.05, following Tsubota, Kasamatsu & Ueda, *Phys. Rev. A* **65**, 023603 (2002). The cloud elongates and its surface becomes unstable. Vortices then enter from the edge (t ≈ 100) and crystallise into a triangular lattice of 18 singly quantised vortices.
+
+<p align="center">
+  <img src="images/11_vortex_lattice_formation.gif" width="80%" alt="Vortex lattice formation">
+</p>
+
+The 2D lattice then seeds a 3D condensate in a cigar-shaped rotating trap (128 × 128 × 64 grid). After 3000 imaginary-time steps in the rotating frame (residual ‖(H − ΩL_z)ψ − μψ‖ = 1.6 × 10⁻³), 18 vortex lines run through the cloud. Below they are drawn as tubes where the density falls below 30% of its local average.
+
+<p align="center">
+  <img src="images/11_vortex_lines_3d.gif" width="60%" alt="3D vortex lines">
+</p>
+
+**Validation:**
+- Feynman's rule for a rigidly rotating superfluid, n_v = mΩ/(πℏ), predicts a triangular-lattice spacing of 2.129.
+- The measured mean nearest-neighbour spacing is 2.034 ± 0.065 in 2D (−4.5%) and 2.044 ± 0.069 in the z = 0 plane of the 3D state (−4.0%).
+- Feynman's rule is exact for an infinite uniform lattice. This one has only 18 vortices in an inhomogeneous cloud, so deviations of a few percent are expected.
+- The rotating-frame solver itself is checked exactly in the validation suite.
+
+![Final 2D vortex lattice](images/11_vortex_lattice_2d.png)
+
+![Vortex count and angular momentum](images/11_vortex_count.png)
+
+![3D vortex lines](images/11_vortex_lines_3d.png)
+
 ---
 
 ## Validation
@@ -260,15 +297,17 @@ The first 60 eigenstates of a soft-walled Bunimovich stadium, which is classical
 | Energy conservation, 3D, 500 steps (order 4) | E(t) = E(0) | 2.18e-10 |
 | Minimum-uncertainty Gaussian (3D) | Δr_j Δp_j = ℏ/2 for each axis | 4.60e-12 |
 | Angular momentum of a vortex state | ⟨L_z⟩ = ℏ for ψ ∝ (x+iy)e^{−r²/2} | 2.22e-16 |
-| Harmonic spectrum 1D, 10 levels (Lanczos) | E_n = n + ½ | 4.80e-14 |
+| Harmonic spectrum 1D, 10 levels (Lanczos) | E_n = n + ½ | 7.02e-14 |
 | Anisotropic 3D harmonic spectrum, 6 levels (LOBPCG) | E = Σ ω_j (n_j + ½) | 1.42e-13 |
 | 3D ground state by imaginary time | E₀ = ½(ω_x+ω_y+ω_z) | 6.95e-10 |
 | Spectrum from autocorrelation (Feit–Fleck) | peaks of FFT[C(t)] at n + ½ | 1.62e-03 |
 | Moving bright soliton, t = 20 | exact sech solution of the 1D NLS | 1.46e-09 |
 | Virial theorem, 3D GP ground state | 2⟨T⟩ − 2⟨V⟩ + 3E_int = 0 | 2.32e-06 |
 | Imaginary-time GP ground state accuracy | residual ∝ dτ² (ratio 4 when halving dτ) | 2.23e-03 |
+| Coherent state in a frame rotating at Ω = 0.6 | ⟨r'⟩ = R(−Ωt)·(x₀ cos ωt, 0) | 1.89e-08 |
+| Vortex eigenstate in the rotating frame | C(t) = e^{−i(2ℏω − Ωℏ)t/ℏ} | 1.15e-08 |
 
-All 15 checks pass. A few rows report something other than a plain error:
+All 17 checks pass. A few rows report something other than a plain error:
 - The two convergence rows give the deviation of the observed order (2.001 and 3.997) from the theoretical one.
 - The Feit–Fleck row is limited by the spectral resolution 2π/T ≈ 0.031.
 - The last row gives the relative deviation of the observed residual ratio (3.99) from 4.
@@ -306,6 +345,20 @@ pip install -e ".[gpu]"
 
 MP4 export uses the `ffmpeg` executable (e.g. `brew install ffmpeg` or `apt install ffmpeg`). GIF export needs only Pillow.
 
+**GPU usage.** Any `SplitOperatorSolver` (and `ground_state`) can run on a CUDA GPU:
+
+```python
+solver = SplitOperatorSolver(grid, trap, dt=0.005, nonlinearity=500.0, rotation=0.8, backend="cupy")
+wf = solver.evolve(wf, 10_000)   # ψ stays on the GPU; one copy back at the end
+```
+
+`backend="auto"` picks the GPU when CuPy and a CUDA device are present and falls back to the CPU otherwise. The GPU path runs in double precision and is tested in three ways:
+- In CI, without a GPU, it runs through a strict emulated device. Any accidental host/device array mixing raises an error there, and the results must match NumPy to 10⁻¹³.
+- On machines with a CUDA device, `tests/test_backends.py` additionally compares real CuPy results with the CPU.
+- `benchmarks/gpu_split_operator.py` reports timings and the GPU–CPU difference.
+
+GitHub's hosted CI runners have no GPU, so the real-CuPy test is skipped there.
+
 ### 2. Run Simulations
 
 Run any example script from the project root:
@@ -328,6 +381,10 @@ python examples/07_3d_double_slit.py
 python examples/08_3d_bec_time_of_flight.py
 python examples/09_soliton_collision.py
 python examples/10_quantum_chaos_stadium.py
+python examples/11_rotating_bec_vortex_lattice.py
+
+# CPU vs GPU timing (GPU columns appear only with CuPy and a CUDA device)
+python benchmarks/gpu_split_operator.py
 
 # Validation report
 python benchmarks/validation_suite.py
@@ -355,7 +412,9 @@ Test coverage includes:
 - `test_stationary.py` — harmonic spectra in 1D/2D/3D, Lanczos vs LOBPCG, imaginary-time accuracy
 - `test_gross_pitaevskii.py` — bright soliton, GP energy conservation, virial theorem in 1D/2D/3D
 - `test_new_potentials_and_observables.py` — traps, apertures, stadium, current, ⟨L_z⟩, Feit–Fleck spectrum
-- `test_volume_3d.py` — isosurface geometry, phase sampling, PNG/GIF/HTML export
+- `test_volume_3d.py` — isosurface geometry, phase sampling, PNG/GIF/HTML export, overlays
+- `test_rotation.py` — rotating-frame coherent state, vortex eigenstate, E − ΩL_z conservation, damping, vortex lattice energy
+- `test_backends.py` — GPU code path against NumPy through a strict emulated device; a real CuPy comparison runs where a CUDA device exists
 
 ---
 
