@@ -11,3 +11,7 @@ output/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# documentation build
+site/
+docs/images/
