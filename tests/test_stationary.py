@@ -66,3 +66,18 @@ def test_ground_state_error_is_second_order_in_dtau():
     _, i1 = ground_state(grid, pot, dtau=0.02, tol=1e-14)
     _, i2 = ground_state(grid, pot, dtau=0.01, tol=1e-14)
     assert i1.residual / i2.residual == pytest.approx(4.0, rel=0.1)
+
+
+def test_dtau_continuation_reaches_the_small_step_accuracy_in_fewer_steps():
+    """A decreasing dτ schedule ends at the accuracy of its last step size."""
+    from quantumlab.core.grid import Grid2D
+    grid = Grid2D(64, -8.0, 8.0, 64, -8.0, 8.0)
+    trap, g = HarmonicTrap((1.0, 1.3)), 50.0
+    _, single = ground_state(grid, trap, dtau=0.0025, nonlinearity=g, tol=1e-12, max_steps=200000)
+    _, staged = ground_state(grid, trap, dtau=[0.04, 0.01, 0.0025], nonlinearity=g, tol=1e-12, max_steps=200000)
+    assert staged.converged
+    assert staged.energy == pytest.approx(single.energy, abs=1e-9)
+    # both stop on the energy criterion, which is quadratic in the residual,
+    # so the residuals agree in magnitude rather than to many digits
+    assert staged.residual < 1.5 * single.residual
+    assert staged.steps < single.steps
