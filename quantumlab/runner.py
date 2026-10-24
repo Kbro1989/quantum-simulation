@@ -107,6 +107,9 @@ class SimulationRunner:
                 grid, potential, dt, hbar, m,
                 order=int(cfg.get("order", 2)),
                 nonlinearity=float(cfg.get("nonlinearity", 0.0)),
+                rotation=float(cfg.get("rotation", 0.0)),
+                damping=float(cfg.get("damping", 0.0)),
+                backend=cfg.get("backend", "numpy"),
             )
         if dim == 1:
             return SplitStep1DSolver(grid, potential, dt, hbar, m)

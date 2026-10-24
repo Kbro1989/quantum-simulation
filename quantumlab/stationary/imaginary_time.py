@@ -27,8 +27,8 @@ def _inner(a, b, dV):
     return np.sum(np.conj(a) * b) * dV
 
 
-def _energy_and_mu(psi, grid, V, hbar, m, g, dV):
-    H_lin = apply_hamiltonian(psi, grid, V, hbar, m)
+def _energy_and_mu(psi, grid, V, hbar, m, g, dV, rotation=0.0):
+    H_lin = apply_hamiltonian(psi, grid, V, hbar, m, rotation=rotation)
     e_lin = float(np.real(_inner(psi, H_lin, dV)))
     e_int = 0.5 * g * float(np.sum(np.abs(psi) ** 4) * dV)
     H_psi = H_lin + g * np.abs(psi) ** 2 * psi
@@ -47,7 +47,8 @@ def _default_guess(grid):
 def ground_state(grid, potential, dtau: float = 0.01, nonlinearity: float = 0.0,
                  initial=None, tol: float = 1e-11, max_steps: int = 50000,
                  check_interval: int = 20, hbar: float = 1.0, m: float = 1.0,
-                 orthogonal_to: Optional[List] = None, workers: int = -1):
+                 orthogonal_to: Optional[List] = None, workers: int = -1,
+                 rotation: float = 0.0, backend='numpy'):
     """
     Relax to the lowest-energy state by imaginary-time propagation.
 
@@ -63,6 +64,14 @@ def ground_state(grid, potential, dtau: float = 0.01, nonlinearity: float = 0.0,
     orthogonal_to : list of WaveFunction, optional
         States projected out after each step (Gram–Schmidt), used to obtain
         excited states of the linear problem.
+    rotation : float
+        Angular velocity Ω of a frame rotating about z (2D/3D). Energies and
+        μ are then those of H − ΩL_z. Above the critical Ω the GP ground state
+        contains vortices; imaginary time only reaches it if the guess breaks
+        rotational symmetry (e.g. an imprinted vortex or a lattice seed).
+    backend : {'numpy', 'cupy', 'auto'}
+        Where the propagation runs (see ``SplitOperatorSolver``). Energies are
+        evaluated on the host every ``check_interval`` steps.
 
     Returns
     -------
@@ -75,7 +84,8 @@ def ground_state(grid, potential, dtau: float = 0.01, nonlinearity: float = 0.0,
     if orthogonal_to and nonlinearity != 0.0:
         raise ValueError('orthogonal_to is only meaningful for the linear problem')
     solver = SplitOperatorSolver(grid, potential, dtau, hbar, m, order=2,
-                                 nonlinearity=nonlinearity, imaginary_time=True, workers=workers)
+                                 nonlinearity=nonlinearity, imaginary_time=True, workers=workers,
+                                 rotation=rotation, backend=backend)
     dV = volume_element(grid)
     wf_class = wavefunction_class(grid)
     V = solver.potential_at(0.0)
@@ -97,18 +107,21 @@ def ground_state(grid, potential, dtau: float = 0.01, nonlinearity: float = 0.0,
     converged = False
     steps = 0
     while steps < max_steps:
-        for _ in range(check_interval):
-            wf = solver.step(wf)
-            if lower:
+        if lower:
+            for _ in range(check_interval):
+                wf = solver.step(wf)
                 wf.psi = project(wf.psi)
+        else:
+            # Keeps ψ on the device (GPU backend) for the whole interval
+            wf = solver.evolve(wf, check_interval)
         steps += check_interval
-        energy, _, _ = _energy_and_mu(wf.psi, grid, V, hbar, m, nonlinearity, dV)
+        energy, _, _ = _energy_and_mu(wf.psi, grid, V, hbar, m, nonlinearity, dV, rotation)
         if abs(energy - energy_prev) < tol:
             converged = True
             break
         energy_prev = energy
 
-    energy, mu, residual = _energy_and_mu(wf.psi, grid, V, hbar, m, nonlinearity, dV)
+    energy, mu, residual = _energy_and_mu(wf.psi, grid, V, hbar, m, nonlinearity, dV, rotation)
     return wf, ConvergenceInfo(converged, steps, energy, mu, residual)
 
 
