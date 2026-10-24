@@ -114,6 +114,11 @@ Propagates a 1D wave packet towards a Gaussian potential barrier, resolving refl
 **Dual Space Analysis (Position & Momentum):**
 ![Gaussian Barrier Dual Space](images/01_gaussian_barrier_dual.png)
 
+**Original visualizations from the first release:**
+![1D Quantum Wave Packet Dispersion and Scattering](quantum_simulation.png)
+
+![Quantum Wave Packet Space-Time Evolution](quantum_space_time.png)
+
 ---
 
 ### 2. Harmonic Oscillator (`examples/02_harmonic_oscillator.py`)
