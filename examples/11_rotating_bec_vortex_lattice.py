@@ -9,15 +9,21 @@ PRA 65, 023603, 2002). The cloud elongates, its surface becomes unstable,
 vortices enter from the edge and crystallise into a triangular lattice.
 
 Part 2 — vortex lines (3D). The 2D lattice seeds a 3D condensate in a
-cigar-shaped rotating trap. Imaginary-time relaxation in the rotating frame
-(a fixed number of steps; its residual is printed) gives a state whose vortex
-lines run along z; they are drawn as tubes inside the translucent cloud.
+cigar-shaped rotating trap with the same radial anisotropy as in part 1.
+Vortex lattices have very soft modes (relaxation rates ~0.01 ω): imaginary
+time stalls on them and its fixed point also carries an O(dτ²) error. So a
+short imaginary-time run only smooths the seed, and the stationary state is
+then found by preconditioned conjugate-gradient energy minimisation
+(``ground_state_pcg``), whose fixed point is exact. The residual
+‖(H − ΩL_z)ψ − μψ‖ is printed; the vortex lines run along z and are drawn as
+tubes inside the translucent cloud. This part takes ~30–40 minutes on a CPU.
 
 Check: a rigidly rotating superfluid has the areal vortex density
 n_v = mΩ/(πℏ) (Feynman's rule), i.e. a triangular lattice with spacing
 a = (2/(√3 n_v))^½. The rule is exact for an infinite uniform lattice; this
 lattice has fewer than 20 vortices in an inhomogeneous cloud, so deviations
-of a few percent are expected. The measured spacing is printed.
+of a few percent are expected. The measured spacing is printed, and each
+line is followed slice by slice along z to measure how straight it is.
 
 Outputs (in output/):
     11_vortex_lattice_formation.mp4   density and phase during formation (2D)
@@ -36,7 +42,7 @@ from scipy.spatial import cKDTree
 from quantumlab.core.grid import Grid2D, Grid3D
 from quantumlab.core.wavefunction import WaveFunction2D, WaveFunction3D
 from quantumlab.potentials import HarmonicTrap
-from quantumlab.stationary import ground_state
+from quantumlab.stationary import ground_state, ground_state_pcg
 from quantumlab.solvers.split_operator import SplitOperatorSolver
 from quantumlab.observables import angular_momentum_z_expectation, vortex_positions
 from quantumlab.visualization.volume_3d import IsosurfaceAnimation, IsosurfaceRenderer
@@ -148,20 +154,50 @@ def main():
     grid3 = Grid3D(128, -10.0, 10.0, 128, -10.0, 10.0, 64, -(Z + 3.0), Z + 3.0)
     trap3 = HarmonicTrap((np.sqrt(1.0 + eps_x), np.sqrt(1.0 + eps_y), omega_z))
     profile_z = np.sqrt(np.clip(1.0 - grid3.z ** 2 / Z ** 2, 0.0, None))
-    guess = wf.psi[:, :, None] * profile_z[None, None, :]
-    print(f'\n[2] 3D: cigar trap ω = (1.015, 1.044, {omega_z}), g = {g3:.0f}, '
-          f'grid {grid3.N_x}×{grid3.N_y}×{grid3.N_z}; imaginary time in the rotating frame')
-    wf3, info3 = ground_state(grid3, trap3, dtau=0.005, nonlinearity=g3, rotation=Om, initial=guess,
-                              tol=1e-9, max_steps=3000, check_interval=50)
-    print(f'    steps = {info3.steps}, energy converged to 1e-9 = {info3.converged}, '
-          f'μ = {info3.chemical_potential:.4f}, residual ‖(H−ΩL_z)ψ − μψ‖ = {info3.residual:.1e}')
+    wf3 = WaveFunction3D(grid3, wf.psi[:, :, None] * profile_z[None, None, :])
+    wf3.normalize()
+    print(f'\n[2] 3D: cigar trap ω = (1.015, 1.044, {omega_z}), g = {g3:.0f}, grid {grid3.N_x}×{grid3.N_y}×{grid3.N_z}; '
+          f'stationary state in the rotating frame')
+    # A short imaginary-time run smooths the extruded 2D seed; the energy minimiser does the rest
+    wf3, info_it = ground_state(grid3, trap3, dtau=0.02, nonlinearity=g3, rotation=Om, initial=wf3,
+                                tol=0.0, max_steps=1000, check_interval=500)
+    print(f'    imaginary time (dτ = 0.02, {info_it.steps} steps): residual {info_it.residual:.2e}')
 
+    def progress(it, residual, energy):
+        print(f'    conjugate gradient {it:5d}: residual {residual:.2e}, E = {energy:.10f}', flush=True)
+
+    wf3, info3 = ground_state_pcg(grid3, trap3, initial=wf3, nonlinearity=g3, rotation=Om, tol=1e-6,
+                                  max_iter=15000, callback=progress, callback_interval=500)
+    print(f'    converged = {info3.converged} after {info3.steps} iterations: E = {info3.energy:.10f}, '
+          f'μ = {info3.chemical_potential:.10f}, residual ‖(H−ΩL_z)ψ − μψ‖ = {info3.residual:.2e}')
     k0 = int(np.argmin(np.abs(grid3.z)))
     mid = WaveFunction2D(Grid2D(grid3.N_x, -10.0, 10.0, grid3.N_y, -10.0, 10.0), wf3.psi[:, :, k0])
     pos3, q3 = vortex_positions(mid)
     a3, a3_std = lattice_spacing(pos3)
     print(f'    vortex lines crossing z = 0: {len(pos3)};  spacing {a3:.3f} ± {a3_std:.3f} '
           f'(Feynman {a_feynman:.3f}, {100 * (a3 / a_feynman - 1):+.1f}%)')
+    # Straightness: follow each line slice by slice from z = 0 out to |z| = 0.6 Z. A line is
+    # lost where no vortex lies within half a lattice spacing of its last position, i.e. it
+    # has left the region where vortices are detected (density above 20% of the slice maximum).
+    shift, followed, outward = np.zeros(len(pos3)), np.ones(len(pos3), dtype=bool), np.ones(len(pos3), dtype=bool)
+    for step in (1, -1):
+        current, alive, k = pos3.copy(), np.ones(len(pos3), dtype=bool), k0
+        while abs(grid3.z[k + step]) <= 0.6 * Z:
+            k += step
+            p, _ = vortex_positions(WaveFunction2D(mid.grid, wf3.psi[:, :, k]))
+            d, j = cKDTree(p).query(current)
+            alive &= d < 0.5 * a3
+            current[alive] = p[j[alive]]
+            shift[alive] = np.maximum(shift[alive], np.hypot(*(current[alive] - pos3[alive]).T))
+        followed &= alive
+        outward &= np.sum((current - pos3) * pos3, axis=1) >= 0.0      # moved away from the axis
+    radius = np.hypot(pos3[:, 0], pos3[:, 1])
+    inner = radius < 0.7 * radius.max()
+    print(f'    {followed.sum()} of {len(pos3)} lines followed through every slice with |z| ≤ 0.6 Z; largest '
+          f'lateral shift from the z = 0 position: inner lines {shift[inner].max():.2f}, outer ring '
+          f'{shift[~inner].max():.2f}{" (outwards)" if outward.all() else ""} (grid spacing {grid3.dx:.3f})')
+    if not followed.all():
+        print(f'    {(~followed).sum()} outermost line(s) leave the dense part of the cloud before |z| = 0.6 Z')
 
     rho = wf3.probability_density
     envelope = gaussian_filter(rho, sigma=(1.0 / grid3.dx, 1.0 / grid3.dy, 0.0))
