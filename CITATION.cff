@@ -6,15 +6,17 @@ abstract: >-
   A Python framework for numerical quantum mechanics. It solves the
   time-dependent Schrödinger and Gross–Pitaevskii equations in 1D, 2D and 3D
   with split-step Fourier methods of order 2 and 4, including time-dependent
-  potentials, rotating frames, imaginary-time and matrix-free eigensolvers,
-  optional CUDA GPU acceleration, and 3D isosurface rendering. Results are
+  potentials, rotating frames, two-component condensates, strong-field
+  physics (high-harmonic generation), imaginary-time, conjugate-gradient and
+  matrix-free eigensolvers, optional CUDA GPU acceleration, and 3D isosurface
+  rendering. Results are
   validated against analytic and independent numerical references.
 authors:
   - given-names: Ahmad
     family-names: Rasidi
     alias: rasidi3112
   - alias: Kbro1989
-version: 1.2.0
+version: 1.3.0
 date-released: "2026-10-24"
 license: MIT
 repository-code: "https://github.com/rasidi3112/quantum-simulation"
