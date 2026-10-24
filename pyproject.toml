@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quantumlab"
-version = "1.2.0"
+version = "1.3.0"
 description = "Research-Grade Quantum Simulation Framework solving TDSE in 1D, 2D, and 3D via Split-Step Fourier Method"
 readme = "README.md"
 requires-python = ">=3.9"

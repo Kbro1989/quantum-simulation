@@ -34,11 +34,11 @@ Every new feature is checked against exact or independent results; see [Validati
 - **2D Visualization**: Probability density heatmaps, snapshot grids, and orthogonal slices for 3D wavefunctions.
 - **3D Space-Time Rendering**: Premium 3D surface visualizations of 1D probability density evolution over time.
 
-### New since v1.2 (unreleased)
+### New in v1.3
 
 - **Conjugate-gradient ground states** (`ground_state_pcg`):
   - preconditioned nonlinear conjugate gradient on the sphere ‖ψ‖² = N, with an exact fixed point (no dτ error);
-  - converges on soft modes such as vortex lattices where imaginary time stalls;
+  - converges on soft modes such as vortex lattices where imaginary time stalls: the 3D lattice of example 11 reaches a residual below 10⁻⁶;
   - `ground_state` also accepts a decreasing dτ schedule.
 - **Two-component condensates** (`CoupledGPESolver`, `coupled_ground_state`):
   - coupled Gross–Pitaevskii equations, with rotation, damping and GPU support;
@@ -46,6 +46,7 @@ Every new feature is checked against exact or independent results; see [Validati
 - **Strong-field physics** (`quantumlab.strongfield`):
   - high-harmonic generation from a hydrogen atom (`SoftCoulomb`) in intense laser pulses (`flat_top_envelope`);
   - harmonic spectra, Gabor time–frequency maps, the classical three-step model, and attosecond pulse synthesis.
+- **Documentation site** at [rasidi3112.github.io/quantum-simulation](https://rasidi3112.github.io/quantum-simulation/), with guides and an API reference generated from the docstrings, and a Colab notebook that validates the GPU backend on real hardware.
 
 ### New in v1.2
 
@@ -584,7 +585,7 @@ If you use QuantumLab in your work, please cite it. GitHub's **"Cite this reposi
 @software{quantumlab,
   author  = {Rasidi, Ahmad and Kbro1989},
   title   = {QuantumLab: Quantum Simulation Framework},
-  version = {1.2.0},
+  version = {1.3.0},
   year    = {2026},
   url     = {https://github.com/rasidi3112/quantum-simulation}
 }
