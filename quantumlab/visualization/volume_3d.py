@@ -127,14 +127,14 @@ class IsosurfaceRenderer:
         bg = '#0b0b10' if self.theme == 'dark' else 'white'
         self.fig = plt.figure(figsize=self.figsize)
         self.fig.patch.set_facecolor(bg)
-        self.ax = self.fig.add_axes([-0.05, -0.02, 0.9, 0.94], projection='3d')
+        self.ax = self.fig.add_axes([-0.06, -0.02, 0.87, 0.94], projection='3d')
         self.ax.set_facecolor(bg)
         self._bg = bg
         self._title = self.fig.text(0.5, 0.965, '', ha='center', va='top', fontsize=14, fontweight='bold')
         self._time = self.fig.text(0.03, 0.965, '', ha='left', va='top', fontsize=12,
                                    family='monospace', fontweight='bold')
         self._caption = self.fig.text(0.03, 0.02, '', ha='left', va='bottom', fontsize=8, alpha=0.75)
-        cax = self.fig.add_axes([0.885, 0.28, 0.02, 0.42])
+        cax = self.fig.add_axes([0.9, 0.28, 0.018, 0.42])
         if self.color_by == 'phase':
             sm = cm.ScalarMappable(norm=Normalize(-np.pi, np.pi), cmap=self.phase_cmap)
             cbar = self.fig.colorbar(sm, cax=cax, ticks=[-np.pi, 0, np.pi])
