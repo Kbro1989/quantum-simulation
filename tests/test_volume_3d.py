@@ -76,3 +76,14 @@ def test_renderer_rejects_2d_grid():
     from quantumlab.core.grid import Grid2D
     with pytest.raises(TypeError):
         IsosurfaceRenderer(Grid2D(8, -1, 1, 8, -1, 1))
+
+
+def test_renderer_draws_overlay_surfaces(tmp_path, grid):
+    r = np.sqrt(grid.X ** 2 + grid.Y ** 2)
+    overlay = {'field': r, 'level': 0.8, 'color': '#00ffff', 'alpha': 1.0}
+    renderer = IsosurfaceRenderer(grid, levels=(0.2,), color_by='level')
+    fig = renderer.draw(_vortex(grid), t=0.0, overlays=[overlay])
+    # one collection for the overlay tube plus one for the density shell
+    assert len(fig.axes[0].collections) == 2
+    renderer.save(_vortex(grid), tmp_path / 'ov.png', overlays=[overlay], dpi=30)
+    renderer.close()

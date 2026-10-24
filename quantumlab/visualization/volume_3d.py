@@ -165,12 +165,31 @@ class IsosurfaceRenderer:
             ax.set_axis_off()
 
     def draw(self, psi: np.ndarray, t: Optional[float] = None, elev: float = 22.0,
-             azim: float = -58.0, title: Optional[str] = None, note: Optional[str] = None):
-        """Draw one frame (re-uses the figure across calls) and return it."""
+             azim: float = -58.0, title: Optional[str] = None, note: Optional[str] = None,
+             overlays: Optional[Sequence[dict]] = None):
+        """
+        Draw one frame (re-uses the figure across calls) and return it.
+
+        ``overlays`` is a list of extra opaque surfaces drawn underneath the
+        translucent density shells, each a dict with keys ``field`` (array on
+        the grid), ``level``, and optionally ``color`` and ``alpha``. Example:
+        vortex cores as an isosurface of the normalised density.
+        """
         if self.fig is None:
             self._setup_axes()
         ax = self.ax
         ax.cla()
+        if overlays:
+            # Keep the drawing order: opaque overlays first, translucent shells on top
+            ax.computed_zorder = False
+            for ov in overlays:
+                mesh = extract_isosurface(np.asarray(ov['field']), ov['level'], self.grid, self.step_size)
+                if mesh is None:
+                    continue
+                verts, faces, normals = mesh
+                rgb = np.tile(to_rgb(ov.get('color', '#4fd8ff')), (len(faces), 1))
+                ax.add_collection3d(Poly3DCollection(verts[faces], facecolors=self._shade(rgb, normals),
+                                                     edgecolor='none', alpha=ov.get('alpha', 1.0)))
         psi = np.asarray(psi)
         density = np.abs(psi) ** 2
         peak = self.reference_peak if self.reference_peak is not None else density.max()
@@ -211,8 +230,9 @@ class IsosurfaceRenderer:
         self._time.set_text('' if t is None else f't = {t:6.2f}')
         return self.fig
 
-    def save(self, psi, path, t=None, elev=22.0, azim=-58.0, title=None, note=None, dpi=150):
-        fig = self.draw(psi, t=t, elev=elev, azim=azim, title=title, note=note)
+    def save(self, psi, path, t=None, elev=22.0, azim=-58.0, title=None, note=None, dpi=150,
+             overlays=None):
+        fig = self.draw(psi, t=t, elev=elev, azim=azim, title=title, note=note, overlays=overlays)
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         fig.savefig(path, dpi=dpi, facecolor=self._bg)
         return path
@@ -267,11 +287,12 @@ class IsosurfaceAnimation:
         self.writer.setup(self.renderer.fig, str(self.output_path), self.dpi)
         return self
 
-    def add_frame(self, psi: np.ndarray, t: Optional[float] = None):
+    def add_frame(self, psi: np.ndarray, t: Optional[float] = None, overlays=None):
         frac = self.frames_written / max(self.n_frames - 1, 1)
         azim = self.azim_start + self.orbit_degrees * frac
         elev = self.elev + (self.elev_end - self.elev) * frac
-        self.renderer.draw(psi, t=t, elev=elev, azim=azim, title=self.title, note=self.note)
+        self.renderer.draw(psi, t=t, elev=elev, azim=azim, title=self.title, note=self.note,
+                           overlays=overlays)
         self.writer.grab_frame(facecolor=self.renderer._bg)
         self.frames_written += 1
 

@@ -122,3 +122,19 @@ def test_autocorrelation_spectrum_peaks_at_eigenenergies():
     peaks = sorted(E[i] for i in np.argsort(spectrum)[::-1][:60] if 0 < E[i] < 4)
     for level in (0.5, 1.5, 2.5, 3.5):
         assert min(abs(p - level) for p in peaks) < 2 * np.pi / (n_steps * 0.05)
+
+
+def test_vortex_positions_finds_imprinted_vortices():
+    from quantumlab.observables import vortex_positions
+    grid = Grid2D(128, -8.0, 8.0, 128, -8.0, 8.0)
+    centers = [(-2.0, 1.0, 1), (2.5, -1.5, 1), (0.5, 2.5, -1)]
+    psi = np.exp(-(grid.X ** 2 + grid.Y ** 2) / 32).astype(complex)
+    for cx, cy, q in centers:
+        z = (grid.X - cx) + 1j * q * (grid.Y - cy)
+        psi *= z / np.sqrt(np.abs(z) ** 2 + 0.25)
+    pos, charge = vortex_positions(WaveFunction2D(grid, psi))
+    assert len(pos) == 3
+    for cx, cy, q in centers:
+        k = np.argmin(np.hypot(pos[:, 0] - cx, pos[:, 1] - cy))
+        assert np.hypot(pos[k, 0] - cx, pos[k, 1] - cy) < grid.dx
+        assert charge[k] == q

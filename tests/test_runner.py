@@ -72,6 +72,15 @@ def test_runner_split_operator_solver(tmp_path, dim):
     assert wf.norm() == pytest.approx(1.0, abs=1e-10)
 
 
+def test_runner_rotating_damped_split_operator(tmp_path):
+    cfg = dict(SIMULATIONS['sim_2d'], solver='split_operator', nonlinearity=5.0, rotation=0.5,
+               damping=0.02, backend='auto', dt=0.01, num_steps=3, log_interval=1)
+    path = tmp_path / 'config.yaml'
+    path.write_text(yaml.safe_dump({'output_dir': str(tmp_path / 'out'), 'simulations': {'s': cfg}}))
+    wf = SimulationRunner(str(path)).run()['s']['final_wavefunction']
+    assert wf.norm() == pytest.approx(1.0, abs=1e-10)
+
+
 def test_runner_save_state(tmp_path):
     cfg = dict(SIMULATIONS['sim_1d'], dt=0.01, num_steps=2, save_state=True)
     path = tmp_path / 'config.yaml'
