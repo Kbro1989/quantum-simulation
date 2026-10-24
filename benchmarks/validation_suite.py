@@ -18,7 +18,7 @@ from quantumlab.solvers.split_operator import SplitOperatorSolver
 from quantumlab.stationary import eigenstates, ground_state
 from quantumlab.observables import (
     position_expectation, position_uncertainty, momentum_uncertainty, y_uncertainty, z_uncertainty,
-    momentum_expectation, kinetic_energy_expectation, potential_energy_expectation, interaction_energy,
+    momentum_expectation, kinetic_energy_expectation, y_expectation, potential_energy_expectation, interaction_energy,
     angular_momentum_z_expectation, autocorrelation, total_energy_expectation,
 )
 
@@ -176,6 +176,26 @@ def gp_dtau_order():
           f'observed ratio {ratio:.2f}', abs(ratio - 4.0) / 4.0, 0.1)
 
 
+def rotating_frame():
+    grid = Grid2D(128, -12.0, 12.0, 128, -12.0, 12.0)
+    x0, Om = 2.0, 0.6
+    wf = WaveFunction2D.gaussian(grid, x0, 0.0, 0.0, 0.0, 1 / np.sqrt(2), 1 / np.sqrt(2))
+    solver = SplitOperatorSolver(grid, HarmonicTrap(1.0), 0.01, order=4, rotation=Om)
+    err = 0.0
+    for _ in range(10):
+        wf = solver.evolve(wf, 100)
+        t = solver.t
+        err = max(err, abs(position_expectation(wf) - x0 * np.cos(t) * np.cos(Om * t)),
+                  abs(y_expectation(wf) + x0 * np.cos(t) * np.sin(Om * t)))
+    check('Rotating frame', 'Coherent state in a frame rotating at Ω = 0.6', "⟨r'⟩ = R(−Ωt)·(x₀ cos ωt, 0)",
+          "max |⟨r'⟩ − exact|", err, 1e-7)
+    wf0 = WaveFunction2D(grid, (grid.X + 1j * grid.Y) * np.exp(-(grid.X ** 2 + grid.Y ** 2) / 2)).normalize()
+    solver = SplitOperatorSolver(grid, HarmonicTrap(1.0), 0.01, order=4, rotation=Om)
+    C = autocorrelation(wf0.psi, solver.evolve(wf0, 500).psi, grid)
+    check('Rotating frame', 'Vortex eigenstate in the rotating frame', "C(t) = e^{−i(2ℏω − Ωℏ)t/ℏ}",
+          '|C(t) − exact|', abs(C - np.exp(-1j * (2.0 - Om) * solver.t)), 1e-7)
+
+
 def write_report(path, elapsed):
     lines = [
         '# QuantumLab validation report',
@@ -204,7 +224,8 @@ def main():
         sys.stdout.reconfigure(encoding='utf-8')
     t0 = time.time()
     for fn in (free_spreading, convergence_orders, driven_oscillator, norm_energy_3d, heisenberg_3d,
-               vortex_lz, harmonic_spectra, feit_fleck, bright_soliton, gp_virial, gp_dtau_order):
+               vortex_lz, harmonic_spectra, feit_fleck, bright_soliton, gp_virial, gp_dtau_order,
+               rotating_frame):
         print(f'{fn.__name__}:')
         fn()
     out = Path(__file__).with_name('validation_report.md')
