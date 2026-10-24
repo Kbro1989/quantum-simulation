@@ -81,9 +81,15 @@ def norm_energy_3d():
     pot = HarmonicTrap((1.0, 1.3, 0.8))
     wf = WaveFunction3D.gaussian(grid, 1.0, -0.5, 0.0, 1.0, 0.5, -0.3, 1.0, 0.8, 1.1)
     E0 = total_energy_expectation(wf, pot)
-    wf = SplitOperatorSolver(grid, pot, 0.01, order=4).evolve(wf, 500)
-    check('Dynamics', 'Norm conservation, 3D, 500 steps', 'unitary evolution: ‖ψ‖ = 1',
-          '|‖ψ‖ − 1|', abs(wf.norm() - 1.0), 1e-12)
+    n_steps = 500
+    wf = SplitOperatorSolver(grid, pot, 0.01, order=4).evolve(wf, n_steps)
+    # Every step is unitary in exact arithmetic, so the norm can only drift by
+    # floating-point roundoff: ~ (FFT pairs) × ε × log2(grid size). The actual
+    # value depends on the CPU's rounding (it differs between ARM and x86).
+    fft_pairs = 3 * n_steps                         # Yoshida: 3 Strang sub-steps per step
+    roundoff = fft_pairs * np.finfo(float).eps * np.log2(np.prod(grid.shape))
+    check('Dynamics', 'Norm conservation, 3D, 500 steps', 'unitary evolution: ‖ψ‖ = 1 up to roundoff',
+          '|‖ψ‖ − 1|', abs(wf.norm() - 1.0), roundoff)
     check('Dynamics', 'Energy conservation, 3D, 500 steps (order 4)', 'E(t) = E(0)',
           '|ΔE/E|', abs(total_energy_expectation(wf, pot) - E0) / E0, 1e-8)
 

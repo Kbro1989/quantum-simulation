@@ -293,7 +293,7 @@ The 2D lattice then seeds a 3D condensate in a cigar-shaped rotating trap (128 �
 | Temporal convergence, Strang splitting | global error ∝ dt^2 | 9.10e-04 |
 | Temporal convergence, Yoshida splitting | global error ∝ dt^4 | 3.47e-03 |
 | Driven harmonic oscillator, t ≤ 20 | Ehrenfest: ⟨x⟩ = classical forced trajectory | 5.60e-09 |
-| Norm conservation, 3D, 500 steps | unitary evolution: ‖ψ‖ = 1 | 2.55e-15 |
+| Norm conservation, 3D, 500 steps | unitary evolution: ‖ψ‖ = 1 up to roundoff | 2.55e-15 |
 | Energy conservation, 3D, 500 steps (order 4) | E(t) = E(0) | 2.18e-10 |
 | Minimum-uncertainty Gaussian (3D) | Δr_j Δp_j = ℏ/2 for each axis | 4.60e-12 |
 | Angular momentum of a vortex state | ⟨L_z⟩ = ℏ for ψ ∝ (x+iy)e^{−r²/2} | 2.22e-16 |
