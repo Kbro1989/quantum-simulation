@@ -1,0 +1,98 @@
+site_name: QuantumLab
+site_description: >-
+  Quantum simulation framework in Python: time-dependent Schrödinger and
+  Gross–Pitaevskii equations in 1D/2D/3D, eigensolvers, rotating BECs,
+  CUDA GPU acceleration and 3D rendering.
+site_url: https://rasidi3112.github.io/quantum-simulation/
+site_author: Ahmad Rasidi
+repo_url: https://github.com/rasidi3112/quantum-simulation
+repo_name: rasidi3112/quantum-simulation
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; 2026 Ahmad Rasidi &mdash; MIT License
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: ["."]
+          options:
+            docstring_style: numpy
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_signature_annotations: true
+            merge_init_into_class: true
+            members_order: source
+            filters: ["!^_"]
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - User guide:
+      - Time evolution: guide/solvers.md
+      - Stationary states: guide/stationary.md
+      - Potentials: guide/potentials.md
+      - Observables: guide/observables.md
+      - Visualization: guide/visualization.md
+      - Two-component condensates: guide/multicomponent.md
+      - Strong-field physics: guide/strongfield.md
+      - GPU acceleration: guide/gpu.md
+      - YAML batch runner: guide/runner.md
+  - Examples: examples.md
+  - Validation: validation.md
+  - API reference:
+      - Core: api/core.md
+      - Solvers: api/solvers.md
+      - Stationary states: api/stationary.md
+      - Potentials: api/potentials.md
+      - Observables: api/observables.md
+      - Strong-field physics: api/strongfield.md
+      - Visualization: api/visualization.md
+      - Runner: api/runner.md
+  - Citing & license: citing.md
