@@ -9,6 +9,12 @@ from quantumlab.potentials.oscillator import HarmonicOscillator
 from quantumlab.potentials.periodic import CrystalPotential
 from quantumlab.potentials.disorder import RandomDisorder
 from quantumlab.potentials.custom import CustomPotential
+from quantumlab.potentials.traps import HarmonicTrap
+from quantumlab.potentials.coulomb import SoftCoulomb
+from quantumlab.potentials.apertures import ApertureScreen, StadiumBilliard
+from quantumlab.potentials.time_dependent import (
+    TimeDependentPotential, DipoleDrive, TimeDependentCustomPotential, sin2_envelope, flat_top_envelope,
+)
 
 POTENTIAL_REGISTRY = {
     'gaussian_barrier':    GaussianBarrier,
@@ -25,6 +31,11 @@ POTENTIAL_REGISTRY = {
     'harmonic':            HarmonicOscillator,
     'crystal':             CrystalPotential,
     'disorder':            RandomDisorder,
+    'harmonic_trap':       HarmonicTrap,
+    'aperture_screen':     ApertureScreen,
+    'double_slit':         ApertureScreen,
+    'stadium':             StadiumBilliard,
+    'soft_coulomb':        SoftCoulomb,
 }
 
 def create_potential(name: str, **kwargs) -> Potential:
@@ -41,4 +52,7 @@ __all__ = [
     'InfiniteSquareWell', 'FiniteSquareWell', 'DoubleWell',
     'HarmonicOscillator', 'CrystalPotential', 'RandomDisorder',
     'CustomPotential', 'create_potential',
+    'HarmonicTrap', 'ApertureScreen', 'StadiumBilliard',
+    'TimeDependentPotential', 'DipoleDrive', 'TimeDependentCustomPotential', 'sin2_envelope',
+    'flat_top_envelope', 'SoftCoulomb',
 ]

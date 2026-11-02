@@ -1,6 +1,6 @@
 import numpy as np
 from quantumlab.potentials.base import Potential
-from quantumlab.core.grid import Grid1D, Grid2D
+from quantumlab.core.grid import Grid1D, Grid2D, Grid3D
 
 class CustomPotential(Potential):
 
@@ -10,7 +10,9 @@ class CustomPotential(Potential):
         self.func = func
 
     def evaluate(self, grid) -> np.ndarray:
-        if isinstance(grid, Grid2D):
+        if isinstance(grid, Grid3D):
+            return self.func(grid.X, grid.Y, grid.Z)
+        elif isinstance(grid, Grid2D):
             return self.func(grid.X, grid.Y)
         else:
             return self.func(grid.x)
